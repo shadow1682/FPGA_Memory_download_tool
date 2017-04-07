@@ -30,6 +30,7 @@
 #define IDC_CHECK1                      1015
 #define IDC_CHECK_ENC                   1015
 #define IDC_CHECK_RAM_ENCENABLE         1015
+#define IDC_RADIO_PROM2                 1016
 #define IDC_CHECK2                      1017
 #define IDC_CHECK_WORD                  1017
 #define IDC_COMBO_FORM                  1018
@@ -52,6 +53,10 @@
 #define IDC_BUTTON_FLASH_SAVEWRITE      1049
 #define IDC_STATIC_PEST_FLASH           1050
 #define IDC_COMBO_RAM_SELENC            1051
+#define IDC_BUTTON_RAM_OPENRCF          1053
+#define IDC_BUTTON_RAM_OPENPROM         1054
+#define IDC_BUTTON_RAM_OPENALG          1055
+#define IDC_BUTTON_RAM_OPENTROM         1056
 #define ID_32771                        32771
 #define ID_32773                        32773
 #define ID_Close_Dev                    32774
@@ -65,7 +70,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        139
 #define _APS_NEXT_COMMAND_VALUE         32780
-#define _APS_NEXT_CONTROL_VALUE         1053
+#define _APS_NEXT_CONTROL_VALUE         1054
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

@@ -88,6 +88,7 @@ BEGIN_MESSAGE_MAP(CFPGA_Memory_SetDlg, CDialog)
 	ON_BN_CLICKED(IDC_BUTTON_CLR_READEDIT, &CFPGA_Memory_SetDlg::OnBnClickedButtonClrReadedit)
 	ON_CBN_SELCHANGE(IDC_COMBO_FORM, &CFPGA_Memory_SetDlg::OnCbnSelchangeComboForm)
 	ON_CBN_SELCHANGE(IDC_COMBO_RAM_SELENC, &CFPGA_Memory_SetDlg::OnCbnSelchangeComboRamSelenc)
+	ON_BN_CLICKED(IDC_BUTTON_RAM_OPENRCF, &CFPGA_Memory_SetDlg::OnBnClickedButtonRamOpenrcf)
 END_MESSAGE_MAP()
 
 
@@ -252,7 +253,16 @@ CString persent = _T(""),STR2,str_ADD_ALL,STR_ENC = _T("");
 #define FILE_HEX_STAND_NOENC 1
 #define FILE_HEX_DEFINED_NOENC 2
 
-unsigned int sbox(unsigned int in)
+//define file type
+#define FILE_TYPE_STD_PROM			1  //STD PROM
+#define FILE_TYPE_STD_ALGLIB		2	//STD ALGLIB
+#define FILE_TYPE_STD_TROM			3	//STD TROM
+#define FILE_TYPE_RCF_STD_PROM		4 
+#define FILE_TYPE_RCF_STD_ALGLIB	5 
+#define FILE_TYPE_RCF_STD_TROM		6
+#define FILE_TYPE_NOSTD_RCF			7
+
+UINT sbox(UINT in)
 {
 	if(in == 0x00) return 0x0C;
 	else if(in == 0x01)return 0x05;
@@ -393,13 +403,13 @@ bool Hex_188B_Enc(unsigned char* ROMKEY_UC, int Input_len,unsigned char* Input_D
 	return true;
 }
 
-UINT32 sbox4(UINT32 in,UINT16 KEY)
+UINT32 sbox4(UINT32 din,UINT16 KEY)
 {
-	UINT32 out = 0;
-	out = ((in & 0xFFFF0000) >> 16) |  //in[31:16]
-		(((((in & 0x7FFF0000) << 1) | ((in & 0x80000000) >> 15)) & (((in & 0x00FF0000) << 8) | ((in & 0xFF000000) >> 8))) ^//(({in[30:16],in[31]}) & ({in[23:16],in[31:24]}))
-		(((in & 0x3FFF0000) << 2) | ((in & 0xC0000000) >> 14)) ^ (KEY << 16) ^ ((in & 0x0000FFFF) << 16));
-	return out;
+	UINT32 dout = 0;
+	dout =	((din & 0xFFFF0000) >> 16) |  //in[31:16]
+			(((((din & 0x7FFF0000) << 1) | ((din & 0x80000000) >> 15)) & (((din & 0x00FF0000) << 8) | ((din & 0xFF000000) >> 8))) ^//(({in[30:16],in[31]}) & ({in[23:16],in[31:24]}))
+			(((din & 0x3FFF0000) << 2) | ((din & 0xC0000000) >> 14)) ^ (KEY << 16) ^ ((din & 0x0000FFFF) << 16));
+	return dout;
 }
 bool Hex_328A_Enc(unsigned char* ROMKEY_UC, int Input_len, unsigned char* Input_Data, unsigned char* Enc_Data)//328A加密
 {
@@ -643,8 +653,137 @@ bool Hex_328A_Enc64K(unsigned char* ROMKEY_UC, int Input_len, unsigned char* Inp
 	return true;
 }
 
+void CFPGA_Memory_SetDlg::Func_Enable(bool bEnable)
+{
+	::EnableWindow(::GetDlgItem(this->GetSafeHwnd(),IDC_RADIO_PROM),bEnable);
+	::EnableWindow(::GetDlgItem(this->GetSafeHwnd(),IDC_RADIO_ATMC),bEnable);
+	::EnableWindow(::GetDlgItem(this->GetSafeHwnd(),IDC_RADIO_TROM),bEnable);
+	::EnableWindow(::GetDlgItem(this->GetSafeHwnd(),IDC_COMBO_FORM),bEnable);
+	::EnableWindow(::GetDlgItem(this->GetSafeHwnd(),IDC_BUTTON_SAVE_ENC),bEnable);
+	::EnableWindow(::GetDlgItem(this->GetSafeHwnd(),IDC_BUTTON_RAM),bEnable);
+	::EnableWindow(::GetDlgItem(this->GetSafeHwnd(),IDC_BUTTON_READ),bEnable);
+}
+
 unsigned char buffer_PROM[ADD_LEN] = { 0 }, buffer_ATMC[ADD_LEN] = { 0 }, buffer_TROM[ADD_LEN] = { 0 };
 unsigned char gPromAlglibHexStd[ADD_LEN] = { 0 },gPromAlglibHexFre[ADD_LEN] = { 0 }, gPromAlglibRcf[ADD_LEN] = { 0 }, gHexStdEnc[ADD_LEN_PROM_ATMC] = { 0 };
+
+
+BOOL CFPGA_Memory_SetDlg::FileOpen(int iFileType,int iTrasAdd)
+{
+	unsigned char trans_buffer[1024] = { 0 };
+	int m = 0;
+	CString StrDate = _T(""), StrFileForm = _T("");
+
+	int tras_buf1_PROM = 0, tras_buf2_PROM = 0, tras_add_PROM = 0, tras_buf0_PROM = 0;
+	int tras_buf1_TROM = 0, tras_buf2_TROM = 0, tras_add_TROM = 0, tras_buf0_TROM = 0;
+	int tras_buf1_ATMC = 0, tras_buf2_ATMC = 0, tras_add_ATMC = 0, tras_buf0_ATMC = 0;
+
+	if (iFileType == FILE_TYPE_NOSTD_RCF) StrFileForm = _T("Rcf Files(*.rcf)|*.rcf|All Files (*.*)|*.*||");
+	if (iFileType == 1) StrFileForm = _T("Rcf Files(*.rcf)|*.rcf|All Files (*.*)|*.*||");
+
+	CFileDialog FileDlg(TRUE, NULL, NULL, OFN_EXPLORER | OFN_HIDEREADONLY | OFN_ENABLESIZING | OFN_FILEMUSTEXIST, StrFileForm);
+	if (FileDlg.DoModal() != IDOK)
+	{
+		Func_Enable(TRUE);
+		return false;
+	}
+	//获得文件路径
+	CString strPathName = FileDlg.GetPathName();
+	CStdioFile file;
+	//打开文件
+	if (!file.Open(strPathName, CFile::modeRead))
+	{
+		MessageBox("Load file error.", "ERROR！", MB_ICONEXCLAMATION);
+		Func_Enable(TRUE);
+		return false;
+	}
+
+	if (iFileType == FILE_TYPE_NOSTD_RCF)
+	{
+		while (file.ReadString(StrDate))
+		{
+			StrDate = StrDate.Right(StrDate.GetLength());
+			transCStringbuffer(StrDate, trans_buffer);
+			for (m = 4; m > 0; m--)//将数据存入buffer中
+			{
+				memcpy_s(&gPromAlglibRcf[iTrasAdd], ADD_LEN, &trans_buffer[m - 1], 1);
+				iTrasAdd++;
+			}
+		}
+	}
+	if (iFileType == FILE_TYPE_RCF_STD_PROM || FILE_TYPE_RCF_STD_ALGLIB || FILE_TYPE_RCF_STD_TROM)
+	{
+		while (file.ReadString(StrDate))
+		{
+			if (m_combox_ram_selenc.GetCurSel() == MODE_HY328A_SPW_201703)
+			{
+				StrDate = StrDate.Right(StrDate.GetLength());
+			}
+			else
+			{
+				StrDate = StrDate.Right(StrDate.GetLength() - 1);
+			}
+			transCStringbuffer(StrDate, trans_buffer);
+
+			for (m = 4; m > 0; m--)//将数据存入buffer中
+			{
+				memcpy_s(&gPromAlglibRcf[iTrasAdd], ADD_LEN, &trans_buffer[m - 1], 1);//Modified by ghan in 2017/01/14
+				iTrasAdd++;
+			}
+		}
+	}
+	file.Close();//关闭文件
+
+	return true;
+}
+
+void CFPGA_Memory_SetDlg::OnBnClickedButtonRamOpenrcf()
+{
+	// TODO: 在此添加控件通知处理程序代码
+
+	int iTrasAdd = 0;
+
+	if (m_combox_ram_selenc.GetCurSel() == MODE_HY328A_SPW_201703)
+	{
+		//load the first rcf file
+		iTrasAdd = 0;
+		SetDlgItemText(IDC_STATUES, "Loading the first '64K rcf'file...");
+		FileOpen(FILE_TYPE_NOSTD_RCF, iTrasAdd);
+		MessageBox("Completed!\r\nPlease load the second Rcf file.", "Rcf Download", MB_ICONINFORMATION);
+
+		//load the second rcf file
+		iTrasAdd = 64 * 1024;
+		SetDlgItemText(IDC_STATUES, "Loading the second '64K rcf'file...");
+		FileOpen(FILE_TYPE_NOSTD_RCF, iTrasAdd);
+		MessageBox("Completed!\r\nPlease load the third Rcf file.", "Rcf Download", MB_ICONINFORMATION);
+
+		//load the third rcf file
+		iTrasAdd = 128 * 1024;
+		SetDlgItemText(IDC_STATUES, "Loading the third '64K rcf'file...");
+		FileOpen(FILE_TYPE_NOSTD_RCF, iTrasAdd);
+		SetDlgItemText(IDC_STATUES, "Loading the second '64K rcf'file...");
+
+		memcpy_s(&buffer_PROM[0], ADD_LEN, &gPromAlglibRcf[0], ADD_LEN_PROM);
+		memcpy_s(&buffer_ATMC[0x28000], ADD_LEN, &gPromAlglibRcf[0x28000], ADD_LEN_ATMC);
+	}
+	else
+	{
+		iTrasAdd = 0;//standard prom rcf
+		//SetDlgItemText(IDC_STATUES, "Loading the first '64K rcf'file...");
+		FileOpen(FILE_TYPE_RCF_STD_PROM, iTrasAdd);
+		//MessageBox("Completed!\r\nPlease load the second Rcf file.", "Rcf Download", MB_ICONINFORMATION);
+
+		iTrasAdd = 0x28000;//standard alglib rcf
+		//SetDlgItemText(IDC_STATUES, "Loading the first '64K rcf'file...");
+		FileOpen(FILE_TYPE_RCF_STD_ALGLIB, iTrasAdd);
+		//MessageBox("Completed!\r\nPlease load the second Rcf file.", "Rcf Download", MB_ICONINFORMATION);
+	}
+	iTrasAdd = 0x40000;
+	SetDlgItemText(IDC_STATUES, "Loading file...");
+	FileOpen(FILE_TYPE_RCF_STD_TROM, iTrasAdd);
+	SetDlgItemText(IDC_STATUES, "Loading the second '64K rcf'file...");
+}
+
 
 void CFPGA_Memory_SetDlg::OnBnClickedButtonRam()
 {
@@ -1841,7 +1980,7 @@ Step3: 		if (cMyDlg->check_ATMC == TRUE)
 			//cMyDlg->CButton*GetDlgItem(IDC_RADIO_ATMC)->SetCheck(TRUE);
 		//	cMyDlg->OnBnClickedButtonRam();
 		//}
-	//}//
+	//}
 
 	return true;
 }
@@ -2120,19 +2259,6 @@ void CFPGA_Memory_SetDlg::OnBnClickedButtonClrReadedit()
 
 	s_Readdata = _T("");
 }
-
-void CFPGA_Memory_SetDlg::Func_Enable(bool bEnable)
-{
-	::EnableWindow(::GetDlgItem(this->GetSafeHwnd(),IDC_RADIO_PROM),bEnable);
-	::EnableWindow(::GetDlgItem(this->GetSafeHwnd(),IDC_RADIO_ATMC),bEnable);
-	::EnableWindow(::GetDlgItem(this->GetSafeHwnd(),IDC_RADIO_TROM),bEnable);
-	::EnableWindow(::GetDlgItem(this->GetSafeHwnd(),IDC_COMBO_FORM),bEnable);
-	::EnableWindow(::GetDlgItem(this->GetSafeHwnd(),IDC_BUTTON_SAVE_ENC),bEnable);
-	::EnableWindow(::GetDlgItem(this->GetSafeHwnd(),IDC_BUTTON_RAM),bEnable);
-	::EnableWindow(::GetDlgItem(this->GetSafeHwnd(),IDC_BUTTON_READ),bEnable);
-
-}
-
 
 void CFPGA_Memory_SetDlg::OnCbnSelchangeComboForm()
 {

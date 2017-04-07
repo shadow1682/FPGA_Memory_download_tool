@@ -56,9 +56,11 @@ public:
 	CStatic m_ctrl_static_fpga_send;
 	CStatic m_ctrl_static_fpga_read;
 	void Func_Enable(bool bEnable);
+	BOOL FileOpen(int iFileType, int iTrasAdd);
 	CComboBox m_combox_ram_selenc;
 	afx_msg void OnCbnSelchangeComboForm();
 	afx_msg void OnCbnSelchangeComboRamSelenc();
 	CButton m_ctrl_check_RamEncEn;
 	CButton m_ctrl_radio_RamProm;
+	afx_msg void OnBnClickedButtonRamOpenrcf();
 };
