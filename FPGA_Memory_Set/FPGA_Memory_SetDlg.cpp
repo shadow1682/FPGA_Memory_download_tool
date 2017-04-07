@@ -1841,7 +1841,7 @@ Step3: 		if (cMyDlg->check_ATMC == TRUE)
 			//cMyDlg->CButton*GetDlgItem(IDC_RADIO_ATMC)->SetCheck(TRUE);
 		//	cMyDlg->OnBnClickedButtonRam();
 		//}
-	//}
+	//}//
 
 	return true;
 }
