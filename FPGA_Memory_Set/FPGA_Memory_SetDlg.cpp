@@ -1829,7 +1829,7 @@ Step3: 		if (cMyDlg->check_ATMC == TRUE)
 
 	//spw201703 auto download alglib changed by ghan 3.30.2017
 	//if (cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328A_SPW_201703)
-	{
+	//{
 		//if ((cMyDlg->m_combox_form.GetCurSel() == FILE_RCF_ENC) && (cMyDlg->check_PROM == TRUE))//RCF file
 		//{
 			//CButton* m_radio_atmc = (CButton*)GetDlgItem(IDC_RADIO_ATMC);
@@ -1841,7 +1841,7 @@ Step3: 		if (cMyDlg->check_ATMC == TRUE)
 			//cMyDlg->CButton*GetDlgItem(IDC_RADIO_ATMC)->SetCheck(TRUE);
 		//	cMyDlg->OnBnClickedButtonRam();
 		//}
-	}
+	//}
 
 	return true;
 }
