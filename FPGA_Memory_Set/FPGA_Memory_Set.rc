@@ -1,0 +1,296 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#ifndef APSTUDIO_INVOKED
+#include "targetver.h"
+#endif
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// 中文(简体，中国) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+#pragma code_page(936)
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#ifndef APSTUDIO_INVOKED\r\n"
+    "#include ""targetver.h""\r\n"
+    "#endif\r\n"
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)\r\n"
+    "LANGUAGE 4, 2\r\n"
+    "#pragma code_page(936)\r\n"
+    "#include ""res\\FPGA_Memory_Set.rc2""  // 非 Microsoft Visual C++ 编辑的资源\r\n"
+    "#include ""l.CHS\\afxres.rc""      // 标准组件\r\n"
+    "#endif\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDR_MAINFRAME           ICON                    "res\\FPGA_Memory_Set.ico"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_ABOUTBOX DIALOGEX 0, 0, 170, 62
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "关于 FPGA_Memory_Set"
+FONT 9, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    ICON            IDR_MAINFRAME,IDC_STATIC,14,14,21,20
+    LTEXT           "FPGA_Memory_Set，1.0 版",IDC_STATIC,42,14,114,8,SS_NOPREFIX
+    LTEXT           "Copyright (C) 2015",IDC_STATIC,42,26,114,8
+    DEFPUSHBUTTON   "确定",IDOK,113,41,50,14,WS_GROUP
+END
+
+IDD_FPGA_MEMORY_SET_DIALOG DIALOGEX 0, 0, 510, 308
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_VISIBLE | WS_SYSMENU
+EXSTYLE WS_EX_APPWINDOW
+FONT 9, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    GROUPBOX        "Settings",IDC_STATIC,2,0,153,152
+    PUSHBUTTON      "SaveWriteData",IDC_BUTTON_SAVE,80,189,67,14
+    PUSHBUTTON      "DownLoad",IDC_BUTTON_RAM,26,252,96,30
+    PUSHBUTTON      "SaveReadData",IDC_BUTTON_SAVER,80,207,67,14
+    PUSHBUTTON      "ReadData",IDC_BUTTON_READ,7,189,67,14
+    CTEXT           "%0",IDC_Persent,488,294,22,13,0,WS_EX_CLIENTEDGE
+    EDITTEXT        IDC_STATUES,0,294,485,13,ES_AUTOHSCROLL
+    LTEXT           "Read lenth(Kbytes):",IDC_STATIC,14,172,64,8
+    CONTROL         "prom",IDC_RADIO_PROM,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,15,10,133,13,WS_EX_DLGMODALFRAME
+    CONTROL         "alglib",IDC_RADIO_ATMC,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,15,25,133,13,WS_EX_DLGMODALFRAME
+    CONTROL         "trom",IDC_RADIO_TROM,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,15,40,133,13,WS_EX_DLGMODALFRAME
+    EDITTEXT        IDC_EDIT_LEN,82,170,40,13,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT_ROMKEY,89,117,44,12,ES_UPPERCASE | ES_PASSWORD | ES_AUTOHSCROLL
+    PUSHBUTTON      "SaveEncyptData",IDC_BUTTON_SAVE_ENC,7,207,67,14
+    GROUPBOX        "Debug",IDC_STATIC,2,155,153,90
+    COMBOBOX        IDC_COMBO_FORM,56,57,77,55,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "File format:",IDC_STATIC,15,59,36,8
+    GROUPBOX        "Data encrypt",IDC_STATIC,13,91,136,57
+    LTEXT           "ROMKEY(4Byte):",IDC_STATIC,30,119,54,8
+    CONTROL         "",IDC_RICHEDIT_FPGASEND,"RichEdit20A",ES_MULTILINE | ES_AUTOHSCROLL | ES_NOHIDESEL | ES_WANTRETURN | ES_NUMBER | WS_BORDER | WS_VSCROLL | WS_TABSTOP,163,10,342,152
+    GROUPBOX        "Write:0Byte",IDC_STATIC_FPGA_SEND,157,0,353,168
+    CONTROL         "",IDC_RICHEDIT_FPGAREAD,"RichEdit20A",ES_MULTILINE | ES_AUTOHSCROLL | ES_NOHIDESEL | ES_WANTRETURN | ES_NUMBER | WS_BORDER | WS_VSCROLL | WS_TABSTOP,163,181,342,105
+    GROUPBOX        "Read:0Byte",IDC_STATIC_FPGA_READ,157,170,353,120
+    PUSHBUTTON      "ClearWriteData",IDC_BUTTON_CLR_SENDEDIT,7,225,67,14
+    PUSHBUTTON      "ClearReadData",IDC_BUTTON_CLR_READEDIT,80,225,67,14
+    LTEXT           "Default Key:48*****B",IDC_STATIC,30,133,71,8
+    COMBOBOX        IDC_COMBO_RAM_SELENC,56,74,93,74,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Mode:",IDC_STATIC,15,76,20,8
+    CONTROL         "Encrypt",IDC_CHECK_RAM_ENCENABLE,"Button",BS_AUTOCHECKBOX | BS_LEFTTEXT | BS_LEFT | BS_VCENTER | WS_TABSTOP,30,105,66,9
+END
+
+IDD_DIALOG_INIT DIALOGEX 0, 0, 614, 367
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_MINIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "FPGA_Memory_Set Tool"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL         "",IDC_TAB_INIT,"SysTabControl32",TCS_HOTTRACK | TCS_FIXEDWIDTH,7,7,600,353
+END
+
+IDD_DIALOG_FLASH DIALOGEX 0, 0, 605, 339
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_SYSMENU
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    PUSHBUTTON      "写FLASH",IDC_BUTTON_FLASH,266,144,89,25
+    PUSHBUTTON      "保存发送数据",IDC_BUTTON_FLASH_SAVEWRITE,266,192,89,25
+    EDITTEXT        IDC_EDIT_STATUES_FLASH,0,317,559,15,ES_AUTOHSCROLL
+    LTEXT           "静态",IDC_STATIC_PEST_FLASH,571,317,27,15,0,WS_EX_CLIENTEDGE
+    CONTROL         "",IDC_RICHEDIT21_FLASH_DATA,"RichEdit20A",ES_AUTOHSCROLL | WS_BORDER | WS_TABSTOP,129,38,140,57
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "080403a8"
+        BEGIN
+            VALUE "CompanyName", "TODO: <公司名>"
+            VALUE "FileDescription", "TODO: <文件说明>"
+            VALUE "FileVersion", "1.0.0.1"
+            VALUE "InternalName", "FPGA_Memory_Set.exe"
+            VALUE "LegalCopyright", "TODO: (C) <公司名>。保留所有权利。"
+            VALUE "OriginalFilename", "FPGA_Memory_Set.exe"
+            VALUE "ProductName", "TODO: <产品名>"
+            VALUE "ProductVersion", "1.0.0.1"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x804, 936
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_ABOUTBOX, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 163
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 55
+    END
+
+    IDD_FPGA_MEMORY_SET_DIALOG, DIALOG
+    BEGIN
+        BOTTOMMARGIN, 301
+    END
+
+    IDD_DIALOG_INIT, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 607
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 360
+    END
+
+    IDD_DIALOG_FLASH, DIALOG
+    BEGIN
+        RIGHTMARGIN, 598
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 332
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog Info
+//
+
+IDD_FPGA_MEMORY_SET_DIALOG DLGINIT
+BEGIN
+    IDC_COMBO_FORM, 0x403, 16, 0
+0x4352, 0xce46, 0xbcc4, 0x28fe, 0xd1d2, 0xd3bc, 0xdcc3, 0x0029, 
+    IDC_COMBO_FORM, 0x403, 16, 0
+0x4548, 0xb158, 0xd7ea, 0xb8bc, 0xcaf1, 0xcebd, 0xbcc4, 0x00fe, 
+    IDC_COMBO_FORM, 0x403, 14, 0
+0x4548, 0xd758, 0xb6d4, 0xd2a8, 0xcee5, 0xbcc4, 0x00fe, 
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_DIALOG_FLASH AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_FPGA_MEMORY_SET_DIALOG AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_DIALOG_INIT AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE
+BEGIN
+    IDS_ABOUTBOX            "关于 FPGA_Memory_Set(&A)..."
+END
+
+#endif    // 中文(简体，中国) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)
+LANGUAGE 4, 2
+#pragma code_page(936)
+#include "res\FPGA_Memory_Set.rc2"  // 非 Microsoft Visual C++ 编辑的资源
+#include "l.CHS\afxres.rc"      // 标准组件
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+
