@@ -63,12 +63,14 @@ void CFPGA_Memory_SetDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT_LEN, m_Blen);
 	DDX_Control(pDX, IDC_COMBO_FORM, m_combox_form);
 	DDX_Control(pDX, IDC_RICHEDIT_FPGASEND, m_ctrl_fpgasend);
-	DDX_Control(pDX, IDC_RICHEDIT_FPGAREAD, m_ctrl_fpgaread);
+	DDX_Control(pDX, IDC_RICHEDIT_FPGALOG, m_ctrl_fpgalog);
 	DDX_Control(pDX, IDC_STATIC_FPGA_SEND, m_ctrl_static_fpga_send);
-	DDX_Control(pDX, IDC_STATIC_FPGA_READ, m_ctrl_static_fpga_read);
 	DDX_Control(pDX, IDC_COMBO_RAM_SELENC, m_combox_ram_selenc);
 	DDX_Control(pDX, IDC_CHECK_RAM_ENCENABLE, m_ctrl_check_RamEncEn);
-	DDX_Control(pDX, IDC_RADIO_PROM, m_ctrl_radio_RamProm);
+	DDX_Control(pDX, IDC_CHECK_RAM_PROM, m_ctrl_ram_check_prom);
+	DDX_Control(pDX, IDC_CHECK_RAM_ALGLIB, m_ctrl_ram_check_alglib);
+	DDX_Control(pDX, IDC_CHECK_RAM_TROM, m_ctrl_ram_check_trom);
+	DDX_Control(pDX, IDC_CHECK_RAM_4K, m_ctrl_ram_check_4K);
 }
 
 BEGIN_MESSAGE_MAP(CFPGA_Memory_SetDlg, CDialog)
@@ -77,18 +79,15 @@ BEGIN_MESSAGE_MAP(CFPGA_Memory_SetDlg, CDialog)
 	ON_WM_QUERYDRAGICON()
 	//}}AFX_MSG_MAP
 	ON_BN_CLICKED(IDC_BUTTON_RAM, &CFPGA_Memory_SetDlg::OnBnClickedButtonRam)
-	ON_BN_CLICKED(IDC_RADIO_PROM, &CFPGA_Memory_SetDlg::OnBnClickedRadioProm)
 	ON_BN_CLICKED(IDC_BUTTON_SAVE, &CFPGA_Memory_SetDlg::OnBnClickedButtonSave)
-	ON_BN_CLICKED(IDC_RADIO_ATMC, &CFPGA_Memory_SetDlg::OnBnClickedRadioAtmc)
-	ON_BN_CLICKED(IDC_RADIO_TROM, &CFPGA_Memory_SetDlg::OnBnClickedRadioTrom)
 	ON_BN_CLICKED(IDC_BUTTON_READ, &CFPGA_Memory_SetDlg::OnBnClickedButtonRead)
 	ON_BN_CLICKED(IDC_BUTTON_SAVER, &CFPGA_Memory_SetDlg::OnBnClickedButtonSaver)
 	ON_BN_CLICKED(IDC_BUTTON_SAVE_ENC, &CFPGA_Memory_SetDlg::OnBnClickedButtonSaveEnc)
 	ON_BN_CLICKED(IDC_BUTTON_CLR_SENDEDIT, &CFPGA_Memory_SetDlg::OnBnClickedButtonClrSendedit)
-	ON_BN_CLICKED(IDC_BUTTON_CLR_READEDIT, &CFPGA_Memory_SetDlg::OnBnClickedButtonClrReadedit)
 	ON_CBN_SELCHANGE(IDC_COMBO_FORM, &CFPGA_Memory_SetDlg::OnCbnSelchangeComboForm)
-	ON_CBN_SELCHANGE(IDC_COMBO_RAM_SELENC, &CFPGA_Memory_SetDlg::OnCbnSelchangeComboRamSelenc)
-	ON_BN_CLICKED(IDC_BUTTON_RAM_OPENRCF, &CFPGA_Memory_SetDlg::OnBnClickedButtonRamOpenrcf)
+	ON_BN_CLICKED(IDC_BUTTON_RAM_OPENFILE, &CFPGA_Memory_SetDlg::OnBnClickedButtonRamOpenfile)
+	ON_BN_CLICKED(IDC_CHECK_RAM_PROM, &CFPGA_Memory_SetDlg::OnBnClickedCheckRamProm)
+	ON_BN_CLICKED(IDC_CHECK_RAM_ALGLIB, &CFPGA_Memory_SetDlg::OnBnClickedCheckRamAlglib)
 END_MESSAGE_MAP()
 
 
@@ -124,20 +123,9 @@ BOOL CFPGA_Memory_SetDlg::OnInitDialog()
 
 	// TODO: 在此添加额外的初始化代码
 
-
-	m_ctrl_fpgasend.ReplaceSel(_T("\r\nhex烧写程序使用说明：\r\n"));
-	m_ctrl_fpgasend.ReplaceSel(_T("\r\n1、请先将FPGA通过USB连接至PC。\r\n"));
-	m_ctrl_fpgasend.ReplaceSel(_T("\r\n2、在“Settings”中设置需要写入的块类型，同时设置ROMKEY以及需要烧写的文件类型。\r\n"));
-	m_ctrl_fpgasend.ReplaceSel(_T("\r\nRCF文件：经过加密后生成的格式为.rcf的文件。\r\n"));
-	m_ctrl_fpgasend.ReplaceSel(_T("\r\nHEX标准格式文件：未经加密的格式为.hex的文件，软件会自行加密并将加密数据下载到RAM存储器中。\r\n"));
-	m_ctrl_fpgasend.ReplaceSel(_T("\r\nHEX自定义格式文件：非标准hex格式的.hex文件，没有地址转换行，也未经加密。\r\n"));
-	m_ctrl_fpgasend.ReplaceSel(_T("\r\n3、单击“Download”按钮，选中需要写入的文档，加载即可。\r\n"));
-	m_ctrl_fpgasend.ReplaceSel(_T("\r\n注意：1.如出现地址设置错误等错误信息，请将FPGA板断电重新上电才可继续操作！\r\n"));
-	m_ctrl_fpgasend.ReplaceSel(_T("      2.Debug区域为查错分析所设置，正常下载文件不需要用到。\r\n"));
-
 	//richedit编辑框切换换行
-	m_ctrl_fpgaread.SetTargetDevice(NULL,0);
 	m_ctrl_fpgasend.SetTargetDevice(NULL,0);
+	m_ctrl_fpgalog.SetTargetDevice(NULL, 0);
 
 	//richedit编辑框更改字体
 	CHARFORMAT2 cf_read;
@@ -145,24 +133,13 @@ BOOL CFPGA_Memory_SetDlg::OnInitDialog()
 	cf_read.dwMask = CFM_FACE;
 	strcpy_s(cf_read.szFaceName,_T("宋体"));
 	m_ctrl_fpgasend.SetDefaultCharFormat(cf_read);
-	m_ctrl_fpgaread.SetDefaultCharFormat(cf_read);
-
-	((CButton*)GetDlgItem(IDC_RADIO_PROM))->SetCheck(TRUE);//设置Prom选中
-	check_PROM = TRUE;
-	check_TROM = FALSE;
-	check_ATMC = FALSE;
+	m_ctrl_fpgalog.SetDefaultCharFormat(cf_read);
 
 	SetDlgItemText(IDC_EDIT_ROMKEY,"4859188B");//设置默认KEY
 
 	m_combox_form.SetCurSel(1);//Hex标准加密格式
 
 	m_ctrl_check_RamEncEn.SetCheck(true);
-
-	//GetDlgItem(IDC_RADIO_ATMC)->EnableWindow(false);
-
-	SetDlgItemText(IDC_RADIO_PROM, "Prom:0x00000-0x27FFF(160K)");
-	SetDlgItemText(IDC_RADIO_ATMC, "Alglib:0x28000-0x2FFFF(32K)");
-	SetDlgItemText(IDC_RADIO_TROM, "Trom:0x40000-0x47FFF(32K)");
 
 	m_combox_ram_selenc.AddString(_T("HY188B_201512"));
 	m_combox_ram_selenc.AddString(_T("HY328Av1.0_201604"));
@@ -254,13 +231,17 @@ CString persent = _T(""),STR2,str_ADD_ALL,STR_ENC = _T("");
 #define FILE_HEX_DEFINED_NOENC 2
 
 //define file type
-#define FILE_TYPE_STD_PROM			1  //STD PROM
+#define FILE_TYPE_STD_PROM			1   //STD PROM
 #define FILE_TYPE_STD_ALGLIB		2	//STD ALGLIB
 #define FILE_TYPE_STD_TROM			3	//STD TROM
 #define FILE_TYPE_RCF_STD_PROM		4 
 #define FILE_TYPE_RCF_STD_ALGLIB	5 
 #define FILE_TYPE_RCF_STD_TROM		6
-#define FILE_TYPE_NOSTD_RCF			7
+#define FILE_TYPE_RCF_STD_4K		7
+#define FILE_TYPE_NOSTD_RCF			8
+#define FILE_TYPE_CUSTOMIZE_PROM	11  //CUSTOMIZE PROM
+#define FILE_TYPE_CUSTOMIZE_ALGLIB	12	//CUSTOMIZE ALGLIB
+#define FILE_TYPE_CUSTOMIZE_TROM	13	//CUSTOMIZE TROM
 
 UINT sbox(UINT in)
 {
@@ -630,7 +611,7 @@ bool Hex_328A_Enc64K(unsigned char* ROMKEY_UC, int Input_len, unsigned char* Inp
 			Enc_Data[Enc_num] = ((Enc_word_data[Enc_num_1] & 0xFF00) >> 8); Enc_num++;
 			Enc_Data[Enc_num] = (Enc_word_data[Enc_num_1] & 0xFF); Enc_num++;
 
-			//to compare RCF,eg.(49 a4 f1 29)-->(29 f1 a4 49)  changed by ghan in 3.30.2017
+			//to compare RCF,e.g (49 a4 f1 29)-->(29 f1 a4 49)  changed by ghan in 3.30.2017
 			Enc_dat[6] = ((Enc_word_data[Enc_num_1] & 0xF0000000) >> 28) <= 9 ? ((Enc_word_data[Enc_num_1] & 0xF0000000) >> 28) + '0' : (((Enc_word_data[Enc_num_1] & 0xF0000000) >> 28) - 10) + 'a';
 			Enc_dat[7] = ((Enc_word_data[Enc_num_1] & 0xF000000) >> 24) <= 9 ? ((Enc_word_data[Enc_num_1] & 0xF000000) >> 24) + '0' : (((Enc_word_data[Enc_num_1] & 0xF000000) >> 24) - 10) + 'a';
 			Enc_dat[4] = ((Enc_word_data[Enc_num_1] & 0xF00000) >> 20) <= 9 ? ((Enc_word_data[Enc_num_1] & 0xF00000) >> 20) + '0' : (((Enc_word_data[Enc_num_1] & 0xF00000) >> 20) - 10) + 'a';
@@ -667,21 +648,23 @@ void CFPGA_Memory_SetDlg::Func_Enable(bool bEnable)
 unsigned char buffer_PROM[ADD_LEN] = { 0 }, buffer_ATMC[ADD_LEN] = { 0 }, buffer_TROM[ADD_LEN] = { 0 };
 unsigned char gPromAlglibHexStd[ADD_LEN] = { 0 },gPromAlglibHexFre[ADD_LEN] = { 0 }, gPromAlglibRcf[ADD_LEN] = { 0 }, gHexStdEnc[ADD_LEN_PROM_ATMC] = { 0 };
 
-
-BOOL CFPGA_Memory_SetDlg::FileOpen(int iFileType,int iTrasAdd)
+BOOL CFPGA_Memory_SetDlg::FileOpen(int iFileType,int iTrasAdd,CString fileTitle)
 {
 	unsigned char trans_buffer[1024] = { 0 };
 	int m = 0;
+	int iPdata0 = 0, iPdata1 = 0, iPdata2 = 0, iPdata = 0;
 	CString StrDate = _T(""), StrFileForm = _T("");
 
-	int tras_buf1_PROM = 0, tras_buf2_PROM = 0, tras_add_PROM = 0, tras_buf0_PROM = 0;
-	int tras_buf1_TROM = 0, tras_buf2_TROM = 0, tras_add_TROM = 0, tras_buf0_TROM = 0;
-	int tras_buf1_ATMC = 0, tras_buf2_ATMC = 0, tras_add_ATMC = 0, tras_buf0_ATMC = 0;
-
-	if (iFileType == FILE_TYPE_NOSTD_RCF) StrFileForm = _T("Rcf Files(*.rcf)|*.rcf|All Files (*.*)|*.*||");
-	if (iFileType == 1) StrFileForm = _T("Rcf Files(*.rcf)|*.rcf|All Files (*.*)|*.*||");
+	if (iFileType == FILE_TYPE_NOSTD_RCF ||
+					 FILE_TYPE_RCF_STD_PROM ||
+					 FILE_TYPE_RCF_STD_ALGLIB ||
+					 FILE_TYPE_RCF_STD_TROM) StrFileForm = _T("Rcf Files(*.rcf)|*.rcf|All Files (*.*)|*.*||");
+	if (iFileType == FILE_TYPE_STD_PROM ||
+					 FILE_TYPE_STD_ALGLIB ||
+					 FILE_TYPE_STD_TROM) StrFileForm = _T("Hex Files(*.hex)|*.hex|All Files (*.*)|*.*||");
 
 	CFileDialog FileDlg(TRUE, NULL, NULL, OFN_EXPLORER | OFN_HIDEREADONLY | OFN_ENABLESIZING | OFN_FILEMUSTEXIST, StrFileForm);
+	FileDlg.m_ofn.lpstrTitle = fileTitle;
 	if (FileDlg.DoModal() != IDOK)
 	{
 		Func_Enable(TRUE);
@@ -689,6 +672,7 @@ BOOL CFPGA_Memory_SetDlg::FileOpen(int iFileType,int iTrasAdd)
 	}
 	//获得文件路径
 	CString strPathName = FileDlg.GetPathName();
+	CString strFileName = FileDlg.GetFileName();
 	CStdioFile file;
 	//打开文件
 	if (!file.Open(strPathName, CFile::modeRead))
@@ -711,7 +695,7 @@ BOOL CFPGA_Memory_SetDlg::FileOpen(int iFileType,int iTrasAdd)
 			}
 		}
 	}
-	if (iFileType == FILE_TYPE_RCF_STD_PROM || FILE_TYPE_RCF_STD_ALGLIB || FILE_TYPE_RCF_STD_TROM)
+	else if (iFileType == FILE_TYPE_RCF_STD_PROM || FILE_TYPE_RCF_STD_ALGLIB || FILE_TYPE_RCF_STD_TROM || FILE_TYPE_RCF_STD_4K)
 	{
 		while (file.ReadString(StrDate))
 		{
@@ -732,56 +716,487 @@ BOOL CFPGA_Memory_SetDlg::FileOpen(int iFileType,int iTrasAdd)
 			}
 		}
 	}
+	else if (iFileType == FILE_TYPE_STD_PROM || FILE_TYPE_STD_ALGLIB || FILE_TYPE_STD_TROM)//standard hex file 
+	{
+		if (iFileType == FILE_TYPE_STD_PROM)//PROM
+		{
+			while (file.ReadString(StrDate))
+			{
+				if (StrDate[0] != ':')//检测信息错误行
+				{
+					MessageBox("PROM文档中存在错误数据，错误信息为:" + StrDate, "ERROR！", MB_ICONEXCLAMATION);
+					m_ctrl_fpgalog.ReplaceSel("PROM文档中存在错误数据，错误信息为:" + StrDate);
+					Func_Enable(TRUE);
+					return false;
+				}
+				StrDate.Remove(':');
+				if (StrDate[7] != '0')
+				{
+					if (StrDate[7] == '4')//线性扩展地址行
+					{
+						if (StrDate[11] == '0')
+						{
+							iPdata0 = 0;
+							continue;
+						}
+						else if (StrDate[11] == '1')
+						{
+							iPdata0 = 1;
+							continue;
+						}
+						else if (StrDate[11] == '2')
+						{
+							iPdata0 = 2;
+							continue;
+						}
+						else
+						{
+							MessageBox("PROM文档中存在错误线性扩展地址，错误信息：:" + StrDate, "ERROR！", MB_ICONEXCLAMATION);
+							m_ctrl_fpgalog.ReplaceSel( "错误信息：:" + StrDate);
+							Func_Enable(TRUE);
+							return false;
+						}
+					}
+					else if (StrDate[7] == '1')//文件结束标志
+					{
+						break;
+					}
+					else continue;//数据错误行，跳过       **********此处标志位保留以后继续扩展***********
+				}
+
+				transCStringbuffer(StrDate, trans_buffer);
+
+				iPdata1 = trans_buffer[1];
+				iPdata2 = trans_buffer[2];
+				iPdata = (iPdata0 << 16) | (iPdata1 << 8) | iPdata2;
+
+				if (iPdata > 0x27FFF)
+				{
+					MessageBox("错误的PROM文档！", "ERROR!", MB_ICONEXCLAMATION);
+					m_ctrl_fpgalog.ReplaceSel("错误的PROM文档");
+					Func_Enable(TRUE);
+					return false;
+				}
+				for (m = 0; m < trans_buffer[0]; m++)//将数据存入buffer中
+				{
+					buffer_PROM[iPdata + m] = trans_buffer[m + 4];
+				}
+			}
+		}
+		else if (iFileType == FILE_TYPE_STD_ALGLIB)//ALGLIB
+		{
+			while (file.ReadString(StrDate))
+			{
+				if (StrDate[0] != ':')//检测信息错误行
+				{
+					MessageBox("算法库文档中存在错误数据，错误信息为:" + StrDate, "ERROR！", MB_ICONEXCLAMATION);
+					m_ctrl_fpgalog.ReplaceSel("算法库文档中存在错误数据，错误信息为:" + StrDate);
+					Func_Enable(TRUE);
+					return false;
+				}
+
+				StrDate.Remove(':');
+
+				if (StrDate[7] != '0')
+				{
+					if (StrDate[7] == '4')
+					{
+						if (StrDate[11] == '2')
+						{
+							iPdata0 = 2;
+							continue;
+						}
+						else
+						{
+							MessageBox("算法库文档中存在错误线性扩展地址，错误信息：:" + StrDate, "ERROR！", MB_ICONEXCLAMATION);
+							m_ctrl_fpgalog.ReplaceSel("错误信息:" + StrDate);
+							Func_Enable(TRUE);
+							return false;
+						}
+					}
+					else if (StrDate[7] == '1')break;//文件结束标志
+					else continue;//数据错误行，跳过       **********此处标志位保留以后继续扩展***********
+				}
+
+				transCStringbuffer(StrDate, trans_buffer);//数据行转换
+
+				iPdata1 = trans_buffer[1];
+				iPdata2 = trans_buffer[2];
+				iPdata = (iPdata0 << 16) | (iPdata1 << 8) | iPdata2;
+
+				if ((iPdata < 0x28000) || (iPdata > 0x2FFFF))
+				{
+					MessageBox("错误的算法库文档！", "ERROR!", MB_ICONEXCLAMATION);
+					m_ctrl_fpgalog.ReplaceSel("错误的算法库文档");
+					Func_Enable(TRUE);
+					return false;
+				}
+				for (m = 0; m < trans_buffer[0]; m++)//将数据存入buffer中
+				{
+					buffer_ATMC[iPdata + m] = trans_buffer[m + 4];
+				}
+			}
+		}
+		else//TROM
+		{
+			while (file.ReadString(StrDate))
+			{
+				if (StrDate[0] != ':')//检测信息错误行
+				{
+					MessageBox("TROM文档中存在错误数据，错误信息为:" + StrDate, "ERROR！", MB_ICONEXCLAMATION);
+					m_ctrl_fpgalog.ReplaceSel("TROM文档中存在错误数据，错误信息为:" + StrDate);
+					Func_Enable(TRUE);
+					return false;
+				}
+
+				StrDate.Remove(':');
+
+				if (StrDate[7] != '0')
+				{
+					if (StrDate[7] == '4')
+					{
+						if (StrDate[11] == '4')
+						{
+							iPdata0 = 4;
+							continue;
+						}
+						else
+						{
+							MessageBox("TROM文档中存在错误线性扩展地址，错误信息：:" + StrDate, "ERROR！", MB_ICONEXCLAMATION);
+							m_ctrl_fpgalog.ReplaceSel("错误信息:" + StrDate);
+							Func_Enable(TRUE);
+							return false;
+						}
+					}
+					else if (StrDate[7] == '1') break;//文件结束标志
+					else continue;//数据错误行，跳过       **********此处标志位保留以后继续扩展***********
+				}
+
+				transCStringbuffer(StrDate, trans_buffer);//数据行转换
+
+				iPdata1 = trans_buffer[1];
+				iPdata2 = trans_buffer[2];
+				iPdata = (iPdata0 << 16) | (iPdata1 << 8) | iPdata2;
+
+				if ((iPdata < 0x40000) || (iPdata > 0x47FFF))
+				{
+					MessageBox("错误的TROM文档！", "ERROR!", MB_ICONEXCLAMATION);
+					m_ctrl_fpgalog.ReplaceSel("错误的TROM文档");
+					Func_Enable(TRUE);
+					return false;
+				}
+
+				for (m = 0; m < trans_buffer[0]; m++)//将数据存入buffer中
+				{
+					buffer_TROM[iPdata + m] = trans_buffer[m + 4];
+				}
+			}
+		}
+	}
+	else//customize file
+	{
+		if (iFileType == FILE_TYPE_CUSTOMIZE_PROM)
+		{
+			while (file.ReadString(StrDate))
+			{
+				if (StrDate[0] != ':')//检测信息错误行
+				{
+					MessageBox("PROM文档中存在错误数据，错误信息为:" + StrDate, "ERROR！", MB_ICONEXCLAMATION);
+					m_ctrl_fpgalog.ReplaceSel("PROM文档中存在错误数据，错误信息为:" + StrDate);
+					Func_Enable(TRUE);
+					return false;
+				}
+
+				StrDate.Remove(':');
+
+				if (StrDate[7] != '0')
+				{
+					if (StrDate[7] == '4')//线性扩展地址行
+					{
+						if (StrDate[11] == '0')
+						{
+							iPdata0 = 0;
+							continue;
+						}
+						else if (StrDate[11] == '1')
+						{
+							iPdata0 = 1;
+							continue;
+						}
+						else if (StrDate[11] == '2')
+						{
+							iPdata0 = 2;
+							continue;
+						}
+						else
+						{
+							MessageBox("PROM文档中存在错误线性扩展地址，错误信息：:" + StrDate, "ERROR！", MB_ICONEXCLAMATION);
+							m_ctrl_fpgalog.ReplaceSel("错误信息：:" + StrDate);
+							Func_Enable(TRUE);
+							return false;
+						}
+					}
+					else if (StrDate[7] == '1')//文件结束标志
+					{
+						break;
+					}
+					else continue;//数据错误行，跳过       **********此处标志位保留以后继续扩展***********
+				}
+
+				transCStringbuffer(StrDate, trans_buffer);
+
+				iPdata1 = trans_buffer[1];
+				iPdata2 = trans_buffer[2];
+				iPdata = (iPdata0 << 16) | (iPdata1 << 8) | iPdata2;
+
+				if (iPdata > 0x27FFF)
+				{
+					MessageBox("错误的PROM文档！", "ERROR!", MB_ICONEXCLAMATION);
+					m_ctrl_fpgalog.ReplaceSel("错误的PROM文档");
+					Func_Enable(TRUE);
+					return false;
+				}
+
+				for (m = 0; m < trans_buffer[0]; m++)//将数据存入buffer中
+				{
+					buffer_PROM[iPdata + m] = trans_buffer[m + 4];
+				}
+
+			}
+		}
+		else if (iFileType == FILE_TYPE_CUSTOMIZE_ALGLIB)
+		{
+			while (file.ReadString(StrDate))
+			{
+				if (StrDate[0] != ':')//检测信息错误行
+				{
+					MessageBox("算法库文档中存在错误数据，错误信息为:" + StrDate, "ERROR！", MB_ICONEXCLAMATION);
+					m_ctrl_fpgalog.ReplaceSel("算法库文档中存在错误数据，错误信息为:" + StrDate);
+					Func_Enable(TRUE);
+					return false;
+				}
+
+				StrDate.Remove(':');
+
+				if (StrDate[7] != '0')
+				{
+					if (StrDate[7] == '4')
+					{
+						if (StrDate[11] == '2')
+						{
+							continue;
+						}
+						else
+						{
+							MessageBox("算法库文档中存在错误线性扩展地址，错误信息：:" + StrDate, "ERROR！", MB_ICONEXCLAMATION);
+							m_ctrl_fpgalog.ReplaceSel("错误信息:" + StrDate);
+							Func_Enable(TRUE);
+							return false;
+						}
+					}
+					else if (StrDate[7] == '1')break;//文件结束标志
+					else continue;//数据错误行，跳过       **********此处标志位保留以后继续扩展***********
+				}
+
+				transCStringbuffer(StrDate, trans_buffer);//数据行转换
+
+				iPdata0 = 2;
+				iPdata1 = trans_buffer[1] + 0x80;
+				iPdata2 = trans_buffer[2];
+				iPdata = (iPdata0 << 16) | (iPdata1 << 8) | iPdata2;
+
+				if ((iPdata < 0x28000) || (iPdata > 0x2FFFF))
+				{
+					MessageBox("错误的算法库文档！", "ERROR!", MB_ICONEXCLAMATION);
+					m_ctrl_fpgalog.ReplaceSel("错误的算法库文档");
+					Func_Enable(TRUE);
+					return false;
+				}
+
+				for (m = 0; m < trans_buffer[0]; m++)//将数据存入buffer中
+				{
+					buffer_ATMC[iPdata + m] = trans_buffer[m + 4];
+				}
+			}
+		}
+		else
+		{
+			while (file.ReadString(StrDate))
+			{
+				if (StrDate[0] != ':')//检测信息错误行
+				{
+					MessageBox("TROM文档中存在错误数据，错误信息为:" + StrDate, "ERROR！", MB_ICONEXCLAMATION);
+					m_ctrl_fpgalog.ReplaceSel("TROM文档中存在错误数据，错误信息为:" + StrDate);
+					Func_Enable(TRUE);
+					return false;
+				}
+
+				StrDate.Remove(':');
+
+				if (StrDate[7] != '0')
+				{
+					if (StrDate[7] == '4')
+					{
+						if (StrDate[11] == '4')
+						{
+							continue;
+						}
+						else
+						{
+							MessageBox("TROM文档中存在错误线性扩展地址，错误信息：:" + StrDate, "ERROR！", MB_ICONEXCLAMATION);
+							m_ctrl_fpgalog.ReplaceSel("错误信息:" + StrDate);
+							Func_Enable(TRUE);
+							return false;
+						}
+					}
+					else if (StrDate[7] == '1') break;//文件结束标志
+					else continue;//数据错误行，跳过       **********此处标志位保留以后继续扩展***********
+				}
+
+				transCStringbuffer(StrDate, trans_buffer);//数据行转换
+
+				iPdata0 = 4;
+				iPdata1 = trans_buffer[1];
+				iPdata2 = trans_buffer[2];
+				iPdata = (iPdata0 << 16) | (iPdata1 << 8) | iPdata2;
+
+				if ((iPdata < 0x40000) || (iPdata > 0x47FFF))
+				{
+					MessageBox("错误的TROM文档！", "ERROR!", MB_ICONEXCLAMATION);
+					m_ctrl_fpgalog.ReplaceSel("错误的TROM文档");
+					Func_Enable(TRUE);
+					return false;
+				}
+
+				for (m = 0; m < trans_buffer[0]; m++)//将数据存入buffer中
+				{
+					buffer_TROM[iPdata + m] = trans_buffer[m + 4];
+				}
+			}
+		}
+	}
+	m_ctrl_fpgalog.SetSel(-1, -1);
+	m_ctrl_fpgalog.ReplaceSel("File:" + strFileName + "\r\n");
+	m_ctrl_fpgalog.ReplaceSel("FilePath:"+strPathName+"\r\n");
 	file.Close();//关闭文件
 
 	return true;
 }
 
-void CFPGA_Memory_SetDlg::OnBnClickedButtonRamOpenrcf()
+void CFPGA_Memory_SetDlg::OnBnClickedButtonRamOpenfile()
 {
 	// TODO: 在此添加控件通知处理程序代码
-
 	int iTrasAdd = 0;
-
-	if (m_combox_ram_selenc.GetCurSel() == MODE_HY328A_SPW_201703)
+	if (m_combox_form.GetCurSel() == FILE_RCF_ENC)//RCF format
 	{
-		//load the first rcf file
-		iTrasAdd = 0;
-		SetDlgItemText(IDC_STATUES, "Loading the first '64K rcf'file...");
-		FileOpen(FILE_TYPE_NOSTD_RCF, iTrasAdd);
-		MessageBox("Completed!\r\nPlease load the second Rcf file.", "Rcf Download", MB_ICONINFORMATION);
+		if (m_combox_ram_selenc.GetCurSel() == MODE_HY328A_SPW_201703)
+		{
+			if (m_ctrl_ram_check_prom.GetCheck() && m_ctrl_ram_check_alglib.GetCheck())//PROM&ALGLIB分成3个64K文件载入
+			{
+				//load the first rcf file
+				iTrasAdd = 0;
+				m_ctrl_fpgalog.SetSel(-1, -1);
+				m_ctrl_fpgalog.ReplaceSel("First '64K rcf'file:\r\n");
+				if (FileOpen(FILE_TYPE_NOSTD_RCF, iTrasAdd,"Rcf file")) MessageBox("Completed!Please load the second Rcf file.", "Rcf Download", MB_ICONINFORMATION);
+				else
+				{
+					m_ctrl_fpgalog.SetSel(-1, -1);
+error2:				m_ctrl_fpgalog.ReplaceSel("Load file error\r\n");
+					return;
+				}
 
-		//load the second rcf file
-		iTrasAdd = 64 * 1024;
-		SetDlgItemText(IDC_STATUES, "Loading the second '64K rcf'file...");
-		FileOpen(FILE_TYPE_NOSTD_RCF, iTrasAdd);
-		MessageBox("Completed!\r\nPlease load the third Rcf file.", "Rcf Download", MB_ICONINFORMATION);
+				//load the second rcf file
+				iTrasAdd = 64 * 1024;
+				m_ctrl_fpgalog.SetSel(-1, -1);
+				m_ctrl_fpgalog.ReplaceSel("Second '64K rcf'file:\r\n");
+				if (FileOpen(FILE_TYPE_NOSTD_RCF, iTrasAdd, "Rcf file")) MessageBox("Completed!Please load the third Rcf file.", "Rcf Download", MB_ICONINFORMATION);
+				else goto error2;
 
-		//load the third rcf file
-		iTrasAdd = 128 * 1024;
-		SetDlgItemText(IDC_STATUES, "Loading the third '64K rcf'file...");
-		FileOpen(FILE_TYPE_NOSTD_RCF, iTrasAdd);
-		SetDlgItemText(IDC_STATUES, "Loading the second '64K rcf'file...");
+				//load the third rcf file
+				iTrasAdd = 128 * 1024;
+				m_ctrl_fpgalog.SetSel(-1, -1);
+				m_ctrl_fpgalog.ReplaceSel("Third '64K rcf'file:\r\n");
+				if (FileOpen(FILE_TYPE_NOSTD_RCF, iTrasAdd, "Rcf file")) MessageBox("Completed!", "Rcf Download", MB_ICONINFORMATION);
+				else goto error2;
 
-		memcpy_s(&buffer_PROM[0], ADD_LEN, &gPromAlglibRcf[0], ADD_LEN_PROM);
-		memcpy_s(&buffer_ATMC[0x28000], ADD_LEN, &gPromAlglibRcf[0x28000], ADD_LEN_ATMC);
+				memcpy_s(&buffer_PROM[0], ADD_LEN, &gPromAlglibRcf[0], ADD_LEN_PROM);
+				memcpy_s(&buffer_ATMC[0x28000], ADD_LEN, &gPromAlglibRcf[0x28000], ADD_LEN_ATMC);
+			}
+		}
+		else
+		{
+			if (m_ctrl_ram_check_prom.GetCheck())
+			{
+				iTrasAdd = 0;//standard prom rcf
+				m_ctrl_fpgalog.SetSel(-1, -1);
+				m_ctrl_fpgalog.ReplaceSel("Prom rcf file:\r\n");
+				if(!FileOpen(FILE_TYPE_RCF_STD_PROM, iTrasAdd,"Prom file"))goto error2;
+			}
+			if (m_ctrl_ram_check_alglib.GetCheck())
+			{
+				iTrasAdd = 0x28000;//standard alglib rcf
+				m_ctrl_fpgalog.SetSel(-1, -1);
+				m_ctrl_fpgalog.ReplaceSel("Alglib rcf file:\r\n");
+				if(!FileOpen(FILE_TYPE_RCF_STD_ALGLIB, iTrasAdd, "Alglib file"))goto error2;
+			}
+		}
+		if (m_ctrl_ram_check_4K.GetCheck())
+		{
+			iTrasAdd = 0x30000;
+			m_ctrl_fpgalog.SetSel(-1, -1);
+			m_ctrl_fpgalog.ReplaceSel("4K rcf file:\r\n");
+			if(!FileOpen(FILE_TYPE_RCF_STD_4K, iTrasAdd, "4K file"))goto error2;
+		}
+		if (m_ctrl_ram_check_trom.GetCheck())
+		{
+			iTrasAdd = 0x40000;
+			m_ctrl_fpgalog.SetSel(-1, -1);
+			m_ctrl_fpgalog.ReplaceSel("Trom rcf file:\r\n");
+			if(!FileOpen(FILE_TYPE_RCF_STD_TROM, iTrasAdd, "Trom file"))goto error2;
+		}
 	}
-	else
+	else if (m_combox_form.GetCurSel() == FILE_HEX_STAND_NOENC)//standard file format
 	{
-		iTrasAdd = 0;//standard prom rcf
-		//SetDlgItemText(IDC_STATUES, "Loading the first '64K rcf'file...");
-		FileOpen(FILE_TYPE_RCF_STD_PROM, iTrasAdd);
-		//MessageBox("Completed!\r\nPlease load the second Rcf file.", "Rcf Download", MB_ICONINFORMATION);
-
-		iTrasAdd = 0x28000;//standard alglib rcf
-		//SetDlgItemText(IDC_STATUES, "Loading the first '64K rcf'file...");
-		FileOpen(FILE_TYPE_RCF_STD_ALGLIB, iTrasAdd);
-		//MessageBox("Completed!\r\nPlease load the second Rcf file.", "Rcf Download", MB_ICONINFORMATION);
+		if (m_ctrl_ram_check_prom.GetCheck())
+		{
+			iTrasAdd = 0;//standard prom rcf
+			m_ctrl_fpgalog.ReplaceSel("Prom hex file:\r\n");
+			if(!FileOpen(FILE_TYPE_STD_PROM, iTrasAdd, "Prom file"))goto error2;
+		}
+		if (m_ctrl_ram_check_alglib.GetCheck())
+		{
+			iTrasAdd = 0x28000;//standard alglib rcf
+			m_ctrl_fpgalog.ReplaceSel("Alglib hex file:\r\n");
+			if(!FileOpen(FILE_TYPE_STD_ALGLIB, iTrasAdd, "Alglib file"))goto error2;
+		}
+		if (m_ctrl_ram_check_trom.GetCheck())
+		{
+			iTrasAdd = 0x40000;
+			m_ctrl_fpgalog.ReplaceSel("Trom hex file:\r\n");
+			if(!FileOpen(FILE_TYPE_STD_TROM, iTrasAdd, "Trom file"))goto error2;
+		}
 	}
-	iTrasAdd = 0x40000;
-	SetDlgItemText(IDC_STATUES, "Loading file...");
-	FileOpen(FILE_TYPE_RCF_STD_TROM, iTrasAdd);
-	SetDlgItemText(IDC_STATUES, "Loading the second '64K rcf'file...");
+	else//customize format
+	{
+		if (m_ctrl_ram_check_prom.GetCheck())
+		{
+			iTrasAdd = 0;//standard prom rcf
+			m_ctrl_fpgalog.ReplaceSel("Prom customized hex file:\r\n");
+			if(!FileOpen(FILE_TYPE_CUSTOMIZE_PROM, iTrasAdd, "Prom file"))goto error2;
+		}
+		if (m_ctrl_ram_check_alglib.GetCheck())
+		{
+			iTrasAdd = 0x28000;//standard alglib rcf
+			m_ctrl_fpgalog.ReplaceSel("Alglib customized hex file:\r\n");
+			if(!FileOpen(FILE_TYPE_CUSTOMIZE_ALGLIB, iTrasAdd, "Alglib file"))goto error2;
+		}
+		if (m_ctrl_ram_check_trom.GetCheck())
+		{
+			iTrasAdd = 0x40000;
+			m_ctrl_fpgalog.ReplaceSel("Trom customized hex file:\r\n");
+			if(!FileOpen(FILE_TYPE_CUSTOMIZE_TROM, iTrasAdd, "Trom file"))goto error2;
+		}
+	}
 }
 
 
@@ -789,25 +1204,6 @@ void CFPGA_Memory_SetDlg::OnBnClickedButtonRam()
 {
 	// TODO: 在此添加控件通知处理程序代码
 	/*检测下位机连接状态*/
-
-	if(((CButton*)GetDlgItem(IDC_RADIO_PROM))->GetCheck())
-	{
-		check_PROM = TRUE;
-		check_TROM = FALSE;
-		check_ATMC = FALSE;
-	}
-	else if(((CButton*)GetDlgItem(IDC_RADIO_ATMC))->GetCheck())
-	{
-		check_PROM = FALSE;
-		check_TROM = FALSE;
-		check_ATMC = TRUE;
-	}
-	else
-	{
-		check_PROM = FALSE;
-		check_TROM = TRUE;
-		check_ATMC = FALSE;
-	}
 
 	memset(buffer_PROM, 0, ADD_LEN);
 	memset(buffer_ATMC, 0, ADD_LEN);
@@ -837,19 +1233,14 @@ void CFPGA_Memory_SetDlg::OnBnClickedButtonRam()
 DWORD WINAPI ThreadFun(LPVOID pArg)						//线程入口函数
 {
 	CFPGA_Memory_SetDlg* cMyDlg = (CFPGA_Memory_SetDlg*)pArg;
-	CButton* cMyDlgButton = (CButton*)pArg;
 
 	unsigned char trans_buffer[1024] = { 0 }, send_buffer[SEND_SIZE] = { 0 }, recv_buffer[1024] = { 0 },ROMKEY_UC[4] = {0};
 
 	unsigned char PROM_Enc[ADD_LEN_PROM] = {0},ATMC_Enc[ADD_LEN_ATMC] = {0},TROM_Enc[ADD_LEN_TROM] = {0};
 
-	char memory[64] = { 0 };
-
 	unsigned char data_len[64] = { 0 };
 
-	int tras_buf1_PROM = 0, tras_buf2_PROM = 0, tras_add_PROM = 0, tras_buf0_PROM = 0;
-	int tras_buf1_TROM = 0, tras_buf2_TROM = 0, tras_add_TROM = 0, tras_buf0_TROM = 0;
-	int tras_buf1_ATMC = 0, tras_buf2_ATMC = 0, tras_add_ATMC = 0, tras_buf0_ATMC = 0;
+	char memory[64] = { 0 };
 
 	int m_2 = 0, m_1_TROM = 0, m_1_PROM = 0, m_1_ATMC = 0, m_all = 0;
 
@@ -885,113 +1276,8 @@ error1: cMyDlg->MessageBox("Format error：Romkey", "ERROR_ROMKEY", MB_ICONEXCLAM
 			if (cMyDlg->check_PROM == TRUE)//PROM&ALGLIB分成3个64K文件载入
 			{
 				//载入第一个文件
-				cMyDlg->SetDlgItemText(IDC_STATUES, "Loading the first '64K rcf'file...");
-				CFileDialog dlgRcf1(TRUE, NULL, NULL, OFN_EXPLORER | OFN_HIDEREADONLY | OFN_ENABLESIZING | OFN_FILEMUSTEXIST, "Rcf Files(*.rcf)|*.rcf|All Files (*.*)|*.*||");
-				if (dlgRcf1.DoModal() != IDOK)
-				{
-					cMyDlg->Func_Enable(TRUE);
-					return false;
-				}
-				//获得文件路径
-				CString strPathNameRcf1 = dlgRcf1.GetPathName();
-				CStdioFile fileRcf1;
-				//打开文件
-				if (!fileRcf1.Open(strPathNameRcf1, CFile::modeRead))
-				{
-					cMyDlg->MessageBox("Load file error.", "ERROR！", MB_ICONEXCLAMATION);
-					cMyDlg->Func_Enable(TRUE);
-					return false;
-				}
-				while (fileRcf1.ReadString(strText))
-				{
-					strText = strText.Right(strText.GetLength());
-					transCStringbuffer(strText, trans_buffer);
-
-					for (m_1_PROM = 4; m_1_PROM > 0; m_1_PROM--)//将数据存入buffer中
-					{
-						memcpy_s(&gPromAlglibRcf[tras_add_PROM],ADD_LEN, &trans_buffer[m_1_PROM - 1], 1);//Modified by ghan in 2017/01/14
-						tras_add_PROM++;
-					}
-				}
-				fileRcf1.Close();//关闭文件
-
-				cMyDlg->MessageBox("Completed!\r\nPlease load the second Rcf file.", "Rcf Download", MB_ICONINFORMATION);
-
 				//载入第二个文件
-
-				tras_add_PROM = 64*1024;
-
-				cMyDlg->SetDlgItemText(IDC_STATUES, "Loading the second '64K rcf'file...");
-				CFileDialog dlgRcf2(TRUE, NULL, NULL, OFN_EXPLORER | OFN_HIDEREADONLY | OFN_ENABLESIZING | OFN_FILEMUSTEXIST, "Rcf Files(*.rcf)|*.rcf|All Files (*.*)|*.*||");
-				if (dlgRcf2.DoModal() != IDOK)
-				{
-					cMyDlg->Func_Enable(TRUE);
-					return false;
-				}
-				//获得文件路径
-				CString strPathNameRcf2 = dlgRcf2.GetPathName();
-				CStdioFile fileRcf2;
-				//打开文件
-				if (!fileRcf2.Open(strPathNameRcf2, CFile::modeRead))
-				{
-					cMyDlg->MessageBox("Load file error.", "ERROR！", MB_ICONEXCLAMATION);
-					cMyDlg->Func_Enable(TRUE);
-					return false;
-				}
-				while (fileRcf2.ReadString(strText))
-				{
-					strText = strText.Right(strText.GetLength());
-
-					transCStringbuffer(strText, trans_buffer);
-
-					for (m_1_PROM = 4; m_1_PROM > 0; m_1_PROM--)//将数据存入buffer中
-					{
-						memcpy_s(&gPromAlglibRcf[tras_add_PROM], ADD_LEN, &trans_buffer[m_1_PROM - 1], 1);
-						tras_add_PROM++;
-					}
-				}
-				fileRcf2.Close();//关闭文件
-
-				cMyDlg->MessageBox("Completed!\r\nPlease load the third Rcf file.", "Rcf Download", MB_ICONINFORMATION);
-
 				//载入第三个文件
-
-				tras_add_PROM = 128*1024;
-
-				cMyDlg->SetDlgItemText(IDC_STATUES, "Loading the third '64K rcf'file...");
-				CFileDialog dlgRcf3(TRUE, NULL, NULL, OFN_EXPLORER | OFN_HIDEREADONLY | OFN_ENABLESIZING | OFN_FILEMUSTEXIST, "Rcf Files(*.rcf)|*.rcf|All Files (*.*)|*.*||");
-				if (dlgRcf3.DoModal() != IDOK)
-				{
-					cMyDlg->Func_Enable(TRUE);
-					return false;
-				}
-				//获得文件路径
-				CString strPathNameRcf3 = dlgRcf3.GetPathName();
-				CStdioFile fileRcf3;
-				//打开文件
-				if (!fileRcf3.Open(strPathNameRcf3, CFile::modeRead))
-				{
-					cMyDlg->MessageBox("Load file error.", "ERROR！", MB_ICONEXCLAMATION);
-					cMyDlg->Func_Enable(TRUE);
-					return false;
-				}
-				while (fileRcf3.ReadString(strText))
-				{
-					strText = strText.Right(strText.GetLength());
-
-					transCStringbuffer(strText, trans_buffer);
-
-					for (m_1_PROM = 4; m_1_PROM > 0; m_1_PROM--)//将数据存入buffer中
-					{
-						memcpy_s(&gPromAlglibRcf[tras_add_PROM], ADD_LEN, &trans_buffer[m_1_PROM - 1], 1);
-						tras_add_PROM++;
-					}
-				}
-				fileRcf3.Close();//关闭文件
-
-				memcpy_s(&buffer_PROM[0], ADD_LEN,&gPromAlglibRcf[0], ADD_LEN_PROM);
-
-				//cMyDlg->GetDlgItem(IDC_RADIO_ATMC)->EnableWindow(true);
 
 				data_len[0] = 0x00;
 				data_len[1] = 0x00;
@@ -999,8 +1285,6 @@ error1: cMyDlg->MessageBox("Format error：Romkey", "ERROR_ROMKEY", MB_ICONEXCLAM
 			}
 			else if (cMyDlg->check_ATMC == TRUE)//算法库
 			{
-				memcpy_s(&buffer_ATMC[0x28000], ADD_LEN, &gPromAlglibRcf[0x28000], ADD_LEN_ATMC);
-
 				data_len[0] = 0x02;
 				data_len[1] = 0x80;
 				data_len[2] = 0x00;
@@ -1010,232 +1294,30 @@ error1: cMyDlg->MessageBox("Format error：Romkey", "ERROR_ROMKEY", MB_ICONEXCLAM
 		{
 			if (cMyDlg->check_PROM == TRUE)//PROM
 			{
-				cMyDlg->SetDlgItemText(IDC_STATUES, "Loading file...");
-
-				CFileDialog dlg(TRUE, NULL, NULL, OFN_EXPLORER | OFN_HIDEREADONLY | OFN_ENABLESIZING | OFN_FILEMUSTEXIST, "Rcf Files(*.rcf)|*.rcf|All Files (*.*)|*.*||");
-
-				if (dlg.DoModal() != IDOK)
-				{
-					cMyDlg->Func_Enable(TRUE);
-					return false;
-				}
-
-				//获得文件路径
-				CString strPathName = dlg.GetPathName();
-				CStdioFile file;
-
-				//打开文件
-				if (!file.Open(strPathName, CFile::modeRead))
-				{
-					cMyDlg->MessageBox("Load file error.", "ERROR！", MB_ICONEXCLAMATION);
-					cMyDlg->Func_Enable(TRUE);
-					return false;
-				}
-				while (file.ReadString(strText))
-				{
-					strText = strText.Right(strText.GetLength() - 1);
-
-					transCStringbuffer(strText, trans_buffer);
-
-					for (m_1_PROM = 4; m_1_PROM > 0; m_1_PROM--)//将数据存入buffer中
-					{
-						buffer_PROM[tras_add_PROM] = trans_buffer[m_1_PROM - 1];
-
-						tras_add_PROM++;
-					}
-				}
 				data_len[0] = 0x00;
 				data_len[1] = 0x00;
 				data_len[2] = 0x00;
 
-				file.Close();//关闭文件
 			}
 			else if (cMyDlg->check_ATMC == TRUE)//算法库
 			{
-				cMyDlg->SetDlgItemText(IDC_STATUES, "Loading file...");
-
-				CFileDialog dlg(TRUE, NULL, NULL, OFN_EXPLORER | OFN_HIDEREADONLY | OFN_ENABLESIZING | OFN_FILEMUSTEXIST, "Rcf Files(*.rcf)|*.rcf|All Files (*.*)|*.*||");
-
-				if (dlg.DoModal() != IDOK)
-				{
-					cMyDlg->Func_Enable(TRUE);
-					return false;
-				}
-
-				//获得文件路径
-				CString strPathName = dlg.GetPathName();
-				CStdioFile file;
-
-				//打开文件
-				if (!file.Open(strPathName, CFile::modeRead))
-				{
-					cMyDlg->MessageBox("Load file error.", "ERROR！", MB_ICONEXCLAMATION);
-					cMyDlg->Func_Enable(TRUE);
-					return false;
-				}
-				while (file.ReadString(strText))
-				{
-					strText = strText.Right(strText.GetLength() - 1);
-
-					transCStringbuffer(strText, trans_buffer);
-
-					for (m_1_ATMC = 4; m_1_ATMC > 0; m_1_ATMC--)//将数据存入buffer中
-					{
-						buffer_ATMC[tras_add_ATMC + 0x28000] = trans_buffer[m_1_ATMC - 1];
-
-						tras_add_ATMC++;
-					}
-				}
 				data_len[0] = 0x02;
 				data_len[1] = 0x80;
 				data_len[2] = 0x00;
 
-				file.Close();//关闭文件
 			}
 		}
 		if (cMyDlg->check_TROM == TRUE)//TROM
 		{
-			cMyDlg->SetDlgItemText(IDC_STATUES, "Loading file...");
-
-			CFileDialog dlg(TRUE, NULL, NULL, OFN_EXPLORER | OFN_HIDEREADONLY | OFN_ENABLESIZING | OFN_FILEMUSTEXIST, "Rcf Files(*.rcf)|*.rcf|All Files (*.*)|*.*||");
-
-			if (dlg.DoModal() != IDOK)
-			{
-				cMyDlg->Func_Enable(TRUE);
-				return false;
-			}
-
-			//获得文件路径
-			CString strPathName = dlg.GetPathName();
-			CStdioFile file;
-
-			//打开文件
-			if (!file.Open(strPathName, CFile::modeRead))
-			{
-				cMyDlg->MessageBox("Load file error.", "ERROR！", MB_ICONEXCLAMATION);
-				cMyDlg->Func_Enable(TRUE);
-				return false;
-			}
-			while (file.ReadString(strText))
-			{
-				if (cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328A_SPW_201703)
-				{
-					strText = strText.Right(strText.GetLength());
-				}
-				else
-				{
-					strText = strText.Right(strText.GetLength() - 1);
-				}
-
-				transCStringbuffer(strText, trans_buffer);//数据行转换
-
-				for (m_1_TROM = 4; m_1_TROM > 0; m_1_TROM--)//将数据存入buffer中
-				{
-					buffer_TROM[tras_add_TROM + 0x40000] = trans_buffer[m_1_TROM - 1];
-
-					tras_add_TROM++;
-				}
-			}
 			data_len[0] = 0x04;
 			data_len[1] = 0x00;
 			data_len[2] = 0x00;
-
-			file.Close();//关闭文件
 		}
 	}
 	else if(cMyDlg->m_combox_form.GetCurSel() == FILE_HEX_STAND_NOENC)//按照HEX标准格式转换
 	{
 		if (cMyDlg->check_PROM == TRUE)//PROM
 		{
-			cMyDlg->SetDlgItemText(IDC_STATUES, "Loading file...");
-
-			CFileDialog dlg(TRUE, NULL, NULL, OFN_EXPLORER | OFN_HIDEREADONLY | OFN_ENABLESIZING | OFN_FILEMUSTEXIST, "Hex Files(*.hex)|*.hex|All Files (*.*)|*.*||");
-
-			//CFileDialog dlg(TRUE, "加载文件", "*.*", OFN_EXPLORER | OFN_HIDEREADONLY | OFN_ENABLESIZING | OFN_ALLOWMULTISELECT, "Hex Files(*.hex)|*.hex|All Files (*.*)|*.*||");
-
-			if (dlg.DoModal() != IDOK)
-			{
-				cMyDlg->Func_Enable(TRUE);
-				return false;
-			}
-
-			//获得文件路径
-			CString strPathName = dlg.GetPathName();
-			CStdioFile file;
-
-			//打开文件
-			if (!file.Open(strPathName, CFile::modeRead))
-			{
-				cMyDlg->MessageBox("Load file error.", "ERROR！", MB_ICONEXCLAMATION);
-				cMyDlg->Func_Enable(TRUE);
-				return false;
-			}
-			while (file.ReadString(strText))
-			{
-				if (strText[0] != ':')//检测信息错误行
-				{
-					cMyDlg->MessageBox("PROM文档中存在错误数据，错误信息为:" + strText, "ERROR！", MB_ICONEXCLAMATION);
-					cMyDlg->SetDlgItemText(IDC_STATUES, "PROM文档中存在错误数据，错误信息为:" + strText);
-					cMyDlg->Func_Enable(TRUE);
-					return false;
-				}
-
-				strText.Remove(':');
-
-				if (strText[7] != '0')
-				{
-					if (strText[7] == '4')//线性扩展地址行
-					{
-						if (strText[11] == '0')
-						{
-							tras_buf0_PROM = 0;
-							continue;
-						}
-						else if (strText[11] == '1')
-						{
-							tras_buf0_PROM = 1;
-							continue;
-						}
-						else if (strText[11] == '2')
-						{
-							tras_buf0_PROM = 2;
-							continue;
-						}
-						else
-						{
-							cMyDlg->MessageBox("PROM文档中存在错误线性扩展地址，错误信息：:" + strText, "ERROR！", MB_ICONEXCLAMATION);
-							cMyDlg->SetDlgItemText(IDC_STATUES, "错误信息：:" + strText);
-							cMyDlg->Func_Enable(TRUE);
-							return false;
-						}
-					}
-					else if (strText[7] == '1')//文件结束标志
-					{
-						break;
-					}
-					else continue;//数据错误行，跳过       **********此处标志位保留以后继续扩展***********
-				}
-
-				transCStringbuffer(strText, trans_buffer);
-
-				tras_buf1_PROM = trans_buffer[1];
-				tras_buf2_PROM = trans_buffer[2];
-				tras_add_PROM = (tras_buf0_PROM << 16) | (tras_buf1_PROM << 8) | tras_buf2_PROM;
-
-				if(tras_add_PROM > 0x27FFF)
-				{
-					cMyDlg->MessageBox("错误的PROM文档！", "ERROR!", MB_ICONEXCLAMATION);
-					cMyDlg->SetDlgItemText(IDC_STATUES, "错误的PROM文档");
-					cMyDlg->Func_Enable(TRUE);
-					return false;
-				}
-
-				for (m_1_PROM = 0; m_1_PROM < trans_buffer[0]; m_1_PROM++)//将数据存入buffer中
-				{
-					buffer_PROM[tras_add_PROM + m_1_PROM] = trans_buffer[m_1_PROM + 4];
-				}
-
-			}
 			data_len[0] = 0x00;
 			data_len[1] = 0x00;
 			data_len[2] = 0x00;
@@ -1259,13 +1341,13 @@ error1: cMyDlg->MessageBox("Format error：Romkey", "ERROR_ROMKEY", MB_ICONEXCLAM
 				Hex_328A_Enc(ROMKEY_UC, ADD_LEN_PROM, buffer_PROM, PROM_Enc);//328A
 			}
 
-			file.Close();//关闭文件
+			//file.Close();//关闭文件
 		}
 		if (cMyDlg->check_ATMC == TRUE)//算法库
 		{
 			if (cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328A_SPW_201703)goto Step3;
 
-Step2:		cMyDlg->SetDlgItemText(IDC_STATUES, "打开文档...");
+Step2:		/*cMyDlg->SetDlgItemText(IDC_STATUES, "打开文档...");
 
 			CFileDialog dlg(TRUE, NULL, NULL, OFN_EXPLORER | OFN_HIDEREADONLY | OFN_ENABLESIZING | OFN_FILEMUSTEXIST, "Hex Files(*.hex)|*.hex|All Files (*.*)|*.*||");
 
@@ -1337,7 +1419,7 @@ Step2:		cMyDlg->SetDlgItemText(IDC_STATUES, "打开文档...");
 				{
 					buffer_ATMC[tras_add_ATMC + m_1_ATMC] = trans_buffer[m_1_ATMC + 4];
 				}
-			}
+			}*/
 			data_len[0] = 0x02;
 			data_len[1] = 0x80;
 			data_len[2] = 0x00;
@@ -1356,7 +1438,7 @@ Step2:		cMyDlg->SetDlgItemText(IDC_STATUES, "打开文档...");
 			{
 				Hex_328A_Enc(ROMKEY_UC, ADD_LEN_ATMC, &buffer_ATMC[0x28000], ATMC_Enc);//西蒙算法
 			}
-			file.Close();//关闭文件
+			//file.Close();//关闭文件
 		}
 
 		if (cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328A_SPW_201703)//328A SPW 192K数据处理
@@ -1381,79 +1463,6 @@ Step3: 		if (cMyDlg->check_ATMC == TRUE)
 
 		if (cMyDlg->check_TROM == TRUE)//TROM
 		{
-			cMyDlg->SetDlgItemText(IDC_STATUES, "打开文档...");
-
-			CFileDialog dlg(TRUE, NULL, NULL, OFN_EXPLORER | OFN_HIDEREADONLY | OFN_ENABLESIZING | OFN_FILEMUSTEXIST, "Hex Files(*.hex)|*.hex|All Files (*.*)|*.*||");
-
-			if (dlg.DoModal() != IDOK)
-			{
-				cMyDlg->Func_Enable(TRUE);
-				return false;
-			}
-
-			//获得文件路径
-			CString strPathName = dlg.GetPathName();
-			CStdioFile file;
-
-			//打开文件
-			if (!file.Open(strPathName, CFile::modeRead))
-			{
-				cMyDlg->MessageBox("Load file error.", "ERROR！", MB_ICONEXCLAMATION);
-				cMyDlg->Func_Enable(TRUE);
-				return false;
-			}
-			while (file.ReadString(strText))
-			{
-				if (strText[0] != ':')//检测信息错误行
-				{
-					cMyDlg->MessageBox("TROM文档中存在错误数据，错误信息为:" + strText, "ERROR！", MB_ICONEXCLAMATION);
-					cMyDlg->SetDlgItemText(IDC_STATUES, "TROM文档中存在错误数据，错误信息为:" + strText);
-					cMyDlg->Func_Enable(TRUE);
-					return false;
-				}
-
-				strText.Remove(':');
-
-				if (strText[7] != '0')
-				{
-					if (strText[7] == '4')
-					{
-						if (strText[11] == '4')
-						{
-							tras_buf0_TROM = 4;
-							continue;
-						}
-						else
-						{
-							cMyDlg->MessageBox("TROM文档中存在错误线性扩展地址，错误信息：:" + strText, "ERROR！", MB_ICONEXCLAMATION);
-							cMyDlg->SetDlgItemText(IDC_STATUES, "错误信息:" + strText);
-							cMyDlg->Func_Enable(TRUE);
-							return false;
-						}
-					}
-					else if (strText[7] == '1') break;//文件结束标志
-					else continue;//数据错误行，跳过       **********此处标志位保留以后继续扩展***********
-				}
-
-				transCStringbuffer(strText, trans_buffer);//数据行转换
-
-				tras_buf1_TROM = trans_buffer[1];
-				tras_buf2_TROM = trans_buffer[2];
-				tras_add_TROM = (tras_buf0_TROM << 16) | (tras_buf1_TROM << 8) | tras_buf2_TROM;
-
-				if((tras_add_TROM < 0x40000) || (tras_add_TROM > 0x47FFF))
-				{
-					cMyDlg->MessageBox("错误的TROM文档！","ERROR!", MB_ICONEXCLAMATION);
-					cMyDlg->SetDlgItemText(IDC_STATUES, "错误的TROM文档");
-					cMyDlg->Func_Enable(TRUE);
-					return false;
-				}
-
-				for (m_1_TROM = 0; m_1_TROM < trans_buffer[0]; m_1_TROM++)//将数据存入buffer中
-				{
-					buffer_TROM[tras_add_TROM + m_1_TROM] = trans_buffer[m_1_TROM + 4];
-				}
-			}
 			data_len[0] = 0x04;
 			data_len[1] = 0x00;
 			data_len[2] = 0x00;
@@ -1468,101 +1477,13 @@ Step3: 		if (cMyDlg->check_ATMC == TRUE)
 			{
 				Hex_328A_Enc(ROMKEY_UC, ADD_LEN_TROM, &buffer_TROM[0x40000], TROM_Enc);
 			}
-			file.Close();//关闭文件
+			//file.Close();//关闭文件
 		}
 	}
 	else//自定义HEX文件格式
 	{
-		cMyDlg->SetDlgItemText(IDC_STATUES, "打开文档...");
-
-		CFileDialog dlg(TRUE, NULL, NULL, OFN_EXPLORER | OFN_HIDEREADONLY | OFN_ENABLESIZING | OFN_FILEMUSTEXIST, "Hex Files(*.hex)|*.hex|All Files (*.*)|*.*||");
-
-		if (dlg.DoModal() != IDOK)
-		{
-			cMyDlg->Func_Enable(TRUE);
-			return false;
-		}
-
-		//获得文件路径
-		CString strPathName = dlg.GetPathName();
-		CStdioFile file;
-
-		//打开文件
-		if (!file.Open(strPathName, CFile::modeRead))
-		{
-			cMyDlg->MessageBox("Load file error.", "ERROR！", MB_ICONEXCLAMATION);
-			cMyDlg->Func_Enable(TRUE);
-			return false;
-		}
-
 		if (cMyDlg->check_PROM == TRUE)//PROM
 		{
-			while (file.ReadString(strText))
-			{
-				if (strText[0] != ':')//检测信息错误行
-				{
-					cMyDlg->MessageBox("PROM文档中存在错误数据，错误信息为:" + strText, "ERROR！", MB_ICONEXCLAMATION);
-					cMyDlg->SetDlgItemText(IDC_STATUES, "PROM文档中存在错误数据，错误信息为:" + strText);
-					cMyDlg->Func_Enable(TRUE);
-					return false;
-				}
-
-				strText.Remove(':');
-
-				if (strText[7] != '0')
-				{
-					if (strText[7] == '4')//线性扩展地址行
-					{
-						if (strText[11] == '0')
-						{
-							tras_buf0_PROM = 0;
-							continue;
-						}
-						else if (strText[11] == '1')
-						{
-							tras_buf0_PROM = 1;
-							continue;
-						}
-						else if (strText[11] == '2')
-						{
-							tras_buf0_PROM = 2;
-							continue;
-						}
-						else
-						{
-							cMyDlg->MessageBox("PROM文档中存在错误线性扩展地址，错误信息：:" + strText, "ERROR！", MB_ICONEXCLAMATION);
-							cMyDlg->SetDlgItemText(IDC_STATUES, "错误信息：:" + strText);
-							cMyDlg->Func_Enable(TRUE);
-							return false;
-						}
-					}
-					else if (strText[7] == '1')//文件结束标志
-					{
-						break;
-					}
-					else continue;//数据错误行，跳过       **********此处标志位保留以后继续扩展***********
-				}
-
-				transCStringbuffer(strText, trans_buffer);
-
-				tras_buf1_PROM = trans_buffer[1];
-				tras_buf2_PROM = trans_buffer[2];
-				tras_add_PROM = (tras_buf0_PROM << 16) | (tras_buf1_PROM << 8) | tras_buf2_PROM;
-
-				if(tras_add_PROM > 0x27FFF)
-				{
-					cMyDlg->MessageBox("错误的PROM文档！","ERROR!", MB_ICONEXCLAMATION);
-					cMyDlg->SetDlgItemText(IDC_STATUES, "错误的PROM文档");
-					cMyDlg->Func_Enable(TRUE);
-					return false;
-				}
-
-				for (m_1_PROM = 0; m_1_PROM < trans_buffer[0]; m_1_PROM++)//将数据存入buffer中
-				{
-					buffer_PROM[tras_add_PROM + m_1_PROM] = trans_buffer[m_1_PROM + 4];
-				}
-
-			}
 			data_len[0] = 0x00;
 			data_len[1] = 0x00;
 			data_len[2] = 0x00;
@@ -1579,62 +1500,9 @@ Step3: 		if (cMyDlg->check_ATMC == TRUE)
 				Hex_328A_Enc(ROMKEY_UC, ADD_LEN_PROM, buffer_PROM, PROM_Enc);//328A
 			}
 
-			file.Close();//关闭文件
 		}
 		else if (cMyDlg->check_ATMC == TRUE)//算法库
 		{
-			while (file.ReadString(strText))
-			{
-				if (strText[0] != ':')//检测信息错误行
-				{
-					cMyDlg->MessageBox("算法库文档中存在错误数据，错误信息为:" + strText, "ERROR！", MB_ICONEXCLAMATION);
-					cMyDlg->SetDlgItemText(IDC_STATUES, "算法库文档中存在错误数据，错误信息为:" + strText);
-					cMyDlg->Func_Enable(TRUE);
-					return false;
-				}
-
-				strText.Remove(':');
-
-				if (strText[7] != '0')
-				{
-					if (strText[7] == '4')
-					{
-						if (strText[11] == '2')
-						{
-							continue;
-						}
-						else
-						{
-							cMyDlg->MessageBox("算法库文档中存在错误线性扩展地址，错误信息：:" + strText, "ERROR！", MB_ICONEXCLAMATION);
-							cMyDlg->SetDlgItemText(IDC_STATUES, "错误信息:" + strText);
-							cMyDlg->Func_Enable(TRUE);
-							return false;
-						}
-					}
-					else if (strText[7] == '1')break;//文件结束标志
-					else continue;//数据错误行，跳过       **********此处标志位保留以后继续扩展***********
-				}
-
-				transCStringbuffer(strText, trans_buffer);//数据行转换
-
-				tras_buf0_ATMC = 2;
-				tras_buf1_ATMC = trans_buffer[1]+0x80;
-				tras_buf2_ATMC = trans_buffer[2];
-				tras_add_ATMC = (tras_buf0_ATMC << 16) | (tras_buf1_ATMC << 8) | tras_buf2_ATMC;
-
-				if((tras_add_ATMC < 0x28000) || (tras_add_ATMC > 0x2FFFF))
-				{
-					cMyDlg->MessageBox("错误的算法库文档！","ERROR!", MB_ICONEXCLAMATION);
-					cMyDlg->SetDlgItemText(IDC_STATUES, "错误的算法库文档");
-					cMyDlg->Func_Enable(TRUE);
-					return false;
-				}
-
-				for (m_1_ATMC = 0; m_1_ATMC < trans_buffer[0]; m_1_ATMC++)//将数据存入buffer中
-				{
-					buffer_ATMC[tras_add_ATMC + m_1_ATMC] = trans_buffer[m_1_ATMC + 4];
-				}
-			}
 			data_len[0] = 0x02;
 			data_len[1] = 0x80;
 			data_len[2] = 0x00;
@@ -1650,63 +1518,10 @@ Step3: 		if (cMyDlg->check_ATMC == TRUE)
 				Hex_328A_Enc(ROMKEY_UC, ADD_LEN_ATMC, &buffer_ATMC[0x28000], ATMC_Enc);
 			}
 
-			file.Close();//关闭文件
-
 		}
 		else//TROM
 		{
-			while (file.ReadString(strText))
-			{
-				if (strText[0] != ':')//检测信息错误行
-				{
-					cMyDlg->MessageBox("TROM文档中存在错误数据，错误信息为:" + strText, "ERROR！", MB_ICONEXCLAMATION);
-					cMyDlg->SetDlgItemText(IDC_STATUES, "TROM文档中存在错误数据，错误信息为:" + strText);
-					cMyDlg->Func_Enable(TRUE);
-					return false;
-				}
-
-				strText.Remove(':');
-
-				if (strText[7] != '0')
-				{
-					if (strText[7] == '4')
-					{
-						if (strText[11] == '4')
-						{
-							continue;
-						}
-						else
-						{
-							cMyDlg->MessageBox("TROM文档中存在错误线性扩展地址，错误信息：:" + strText, "ERROR！", MB_ICONEXCLAMATION);
-							cMyDlg->SetDlgItemText(IDC_STATUES, "错误信息:" + strText);
-							cMyDlg->Func_Enable(TRUE);
-							return false;
-						}
-					}
-					else if (strText[7] == '1') break;//文件结束标志
-					else continue;//数据错误行，跳过       **********此处标志位保留以后继续扩展***********
-				}
-
-				transCStringbuffer(strText, trans_buffer);//数据行转换
-
-				tras_buf0_TROM = 4;
-				tras_buf1_TROM = trans_buffer[1];
-				tras_buf2_TROM = trans_buffer[2];
-				tras_add_TROM = (tras_buf0_TROM << 16) | (tras_buf1_TROM << 8) | tras_buf2_TROM;
-
-				if((tras_add_TROM < 0x40000) || (tras_add_TROM > 0x47FFF))
-				{
-					cMyDlg->MessageBox("错误的TROM文档！","ERROR!", MB_ICONEXCLAMATION);
-					cMyDlg->SetDlgItemText(IDC_STATUES, "错误的TROM文档");
-					cMyDlg->Func_Enable(TRUE);
-					return false;
-				}
-
-				for (m_1_TROM = 0; m_1_TROM < trans_buffer[0]; m_1_TROM++)//将数据存入buffer中
-				{
-					buffer_TROM[tras_add_TROM + m_1_TROM] = trans_buffer[m_1_TROM + 4];
-				}
-			}
+			
 			data_len[0] = 0x04;
 			data_len[1] = 0x00;
 			data_len[2] = 0x00;
@@ -1722,7 +1537,7 @@ Step3: 		if (cMyDlg->check_ATMC == TRUE)
 				Hex_328A_Enc(ROMKEY_UC, ADD_LEN_TROM, &buffer_TROM[0x40000], TROM_Enc);
 			}
 
-			file.Close();//关闭文件
+			//file.Close();//关闭文件
 		}
 	}
 
@@ -1738,7 +1553,7 @@ Step3: 		if (cMyDlg->check_ATMC == TRUE)
 	if (recv_buffer[3] != 0x10)
 	{
 		cMyDlg->MessageBox("地址设置失败，请检查设备并对设备进行重新上电", "ERROR！", MB_ICONEXCLAMATION);
-		cMyDlg->SetDlgItemText(IDC_STATUES, "地址设置失败，请检查设备并对设备进行重新上电");
+		cMyDlg->m_ctrl_fpgalog.ReplaceSel("地址设置失败，请检查设备并对设备进行重新上电");
 
 		cMyDlg->Func_Enable(TRUE);
 		return false;
@@ -1841,7 +1656,7 @@ Step3: 		if (cMyDlg->check_ATMC == TRUE)
 			memset(send_buffer, 0, SEND_SIZE);
 
 			ram_strrun.Format("%d", m_all / 1024);
-			cMyDlg->SetDlgItemText(IDC_STATUES, "发送数据中...已发送" + ram_strrun + "K(共160K)");
+			cMyDlg->m_ctrl_fpgalog.ReplaceSel("发送数据中...已发送" + ram_strrun + "K(共160K)");
 
 			m_persent++;
 			persent.Format("%.0f%%", 100.0*(float)(m_persent - 0) / (float)(160 - 0));//显示进度比
@@ -1877,7 +1692,7 @@ Step3: 		if (cMyDlg->check_ATMC == TRUE)
 			memset(send_buffer, 0, SEND_SIZE);
 
 			ram_strrun.Format("%d", m_all / 1024);
-			cMyDlg->SetDlgItemText(IDC_STATUES, "发送数据中...已发送" + ram_strrun + "K(共32K)");
+			cMyDlg->m_ctrl_fpgalog.ReplaceSel("发送数据中...已发送" + ram_strrun + "K(共32K)");
 
 			m_persent++;
 			persent.Format("%.0f%%", 100.0*(float)(m_persent - 0) / (float)(32 - 0));//显示进度比
@@ -1913,7 +1728,7 @@ Step3: 		if (cMyDlg->check_ATMC == TRUE)
 			memset(send_buffer, 0, SEND_SIZE);
 
 			ram_strrun.Format("%d", m_all / 1024);
-			cMyDlg->SetDlgItemText(IDC_STATUES, "发送数据中...已发送" + ram_strrun + "K(共32K)");
+			cMyDlg->m_ctrl_fpgalog.ReplaceSel("发送数据中...已发送" + ram_strrun + "K(共32K)");
 
 			m_persent++;
 			persent.Format("%.0f%%", 100.0*(float)(m_persent - 0) / (float)(32 - 0));//显示进度比
@@ -1921,7 +1736,7 @@ Step3: 		if (cMyDlg->check_ATMC == TRUE)
 		}
 	}
 
-	cMyDlg->SetDlgItemText(IDC_STATUES,"校验已发送数据...");
+	cMyDlg->m_ctrl_fpgalog.ReplaceSel("校验已发送数据...");
 	long check_t = 0;
 
 	while(check_t<1000)
@@ -1933,14 +1748,14 @@ Step3: 		if (cMyDlg->check_ATMC == TRUE)
 		{
 			cMyDlg->MessageBox("写RAM成功！","RAM操作",MB_ICONINFORMATION);
 
-			cMyDlg->SetDlgItemText(IDC_STATUES,"写RAM完成...");
+			cMyDlg->m_ctrl_fpgalog.ReplaceSel("写RAM完成...");
 			memset(recv_buffer,0,1024);
 			break;
 		}
 		else if(recv_buffer[3] == 0xFF)
 		{
 			cMyDlg->MessageBox("写RAM失败!请检查设备并对设备进行重新上电","ERROR！", MB_ICONEXCLAMATION);
-			cMyDlg->SetDlgItemText(IDC_STATUES,"数据读取校验失败，请检查设备并对设备进行重新上电");
+			cMyDlg->m_ctrl_fpgalog.ReplaceSel("数据读取校验失败，请检查设备并对设备进行重新上电");
 			memset(recv_buffer,0,1024);
 
 			cMyDlg->Func_Enable(TRUE);
@@ -1965,22 +1780,6 @@ Step3: 		if (cMyDlg->check_ATMC == TRUE)
 	memset(TROM_Enc,0,ADD_LEN_TROM);
 
 	cMyDlg->Func_Enable(TRUE);
-
-	//spw201703 auto download alglib changed by ghan 3.30.2017
-	//if (cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328A_SPW_201703)
-	//{
-		//if ((cMyDlg->m_combox_form.GetCurSel() == FILE_RCF_ENC) && (cMyDlg->check_PROM == TRUE))//RCF file
-		//{
-			//CButton* m_radio_atmc = (CButton*)GetDlgItem(IDC_RADIO_ATMC);
-			//m_radio_atmc.SetCheck(TRUE);
-		//	cMyDlg->OnBnClickedButtonRam();
-		//}
-		//else if ((cMyDlg->m_combox_form.GetCurSel() == FILE_HEX_STAND_NOENC) && (cMyDlg->check_PROM == TRUE))//standard file
-		//{
-			//cMyDlg->CButton*GetDlgItem(IDC_RADIO_ATMC)->SetCheck(TRUE);
-		//	cMyDlg->OnBnClickedButtonRam();
-		//}
-	//}
 
 	return true;
 }
@@ -2012,24 +1811,15 @@ void CFPGA_Memory_SetDlg::OnBnClickedButtonSave()
 void CFPGA_Memory_SetDlg::OnBnClickedRadioProm()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	check_PROM = TRUE;
-	check_TROM = FALSE;
-	check_ATMC = FALSE;	
 }
 void CFPGA_Memory_SetDlg::OnBnClickedRadioAtmc()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	check_PROM = FALSE;
-	check_TROM = FALSE;
-	check_ATMC = TRUE;
 }
 
 void CFPGA_Memory_SetDlg::OnBnClickedRadioTrom()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	check_PROM = FALSE;
-	check_TROM = TRUE;
-	check_ATMC = FALSE;
 }
 
 CString s_Readdata;
@@ -2095,7 +1885,7 @@ DWORD WINAPI ThreadFun2(LPVOID pArg2)						//线程入口函数
 	int m_1 = 0;
 	CString str_m_1,str_trs = _T("");
 
-	cMyDlg2->SetDlgItemText(IDC_STATUES,"读取数据中...");
+	cMyDlg2->m_ctrl_fpgalog.ReplaceSel("读取数据中...");
 
 	USBBulkWriteData(0,EP1_OUT,(char*)memory,EP1_OUT_SIZE,0);
 
@@ -2171,18 +1961,16 @@ DWORD WINAPI ThreadFun2(LPVOID pArg2)						//线程入口函数
 		memset(recv_buffer_TROM, 0, ADD_LEN_TROM);
 	}
 
-	cMyDlg2->m_ctrl_fpgaread.SetWindowText(_T(""));
+	cMyDlg2->m_ctrl_fpgasend.SetWindowText(_T(""));
 
-	cMyDlg2->m_ctrl_fpgaread.ReplaceSel(s_Readdata);
+	cMyDlg2->m_ctrl_fpgasend.ReplaceSel(s_Readdata);
 
-	str_m_1.Format(_T("%1d"),cMyDlg2->m_ctrl_fpgaread.GetTextLength()/3);
-
-	cMyDlg2->m_ctrl_static_fpga_read.SetWindowText("Read:"+str_m_1+"Byte");
+	str_m_1.Format(_T("%1d"),cMyDlg2->m_ctrl_fpgasend.GetTextLength()/3);
 
 	str_m_1.Format("%d", cMyDlg2->m_Blen);
 
 	cMyDlg2->MessageBox("已读取"+str_m_1+"K数据","RAM操作",MB_ICONINFORMATION);
-	cMyDlg2->SetDlgItemText(IDC_STATUES,"读取数据完成！");
+	cMyDlg2->m_ctrl_fpgalog.ReplaceSel("读取数据完成！");
 
 	cMyDlg2->Func_Enable(TRUE);
 
@@ -2243,22 +2031,14 @@ void CFPGA_Memory_SetDlg::OnBnClickedButtonClrSendedit()
 	// TODO: 在此添加控件通知处理程序代码
 	m_ctrl_fpgasend.SetWindowText(_T(""));
 
-	if (check_PROM == TRUE) memset(buffer_PROM, 0, ADD_LEN_PROM);
-	else if (check_ATMC == TRUE) memset(buffer_ATMC, 0, ADD_LEN_ATMC);
-	else memset(buffer_TROM, 0, ADD_LEN_TROM);
+	memset(buffer_PROM, 0, ADD_LEN_PROM);
+	memset(buffer_ATMC, 0, ADD_LEN_ATMC);
+	memset(buffer_TROM, 0, ADD_LEN_TROM);
 		
-	m_ctrl_static_fpga_send.SetWindowText("Send:0Byte");
+	m_ctrl_static_fpga_send.SetWindowText("Date:0Byte");
 	STR2 = _T("");
 }
 
-void CFPGA_Memory_SetDlg::OnBnClickedButtonClrReadedit()
-{
-	// TODO: 在此添加控件通知处理程序代码
-	m_ctrl_fpgaread.SetWindowText(_T(""));
-	m_ctrl_static_fpga_read.SetWindowText("Read:0Byte");
-
-	s_Readdata = _T("");
-}
 
 void CFPGA_Memory_SetDlg::OnCbnSelchangeComboForm()
 {
@@ -2275,8 +2055,35 @@ void CFPGA_Memory_SetDlg::OnCbnSelchangeComboForm()
 	}
 }
 
-
-void CFPGA_Memory_SetDlg::OnCbnSelchangeComboRamSelenc()
+void CFPGA_Memory_SetDlg::OnBnClickedCheckRamProm()
 {
 	// TODO: 在此添加控件通知处理程序代码
+	if ((m_combox_ram_selenc.GetCurSel() == MODE_HY328A_SPW_201703) && (m_combox_form.GetCurSel() == FILE_RCF_ENC))
+	{
+		if (m_ctrl_ram_check_prom.GetCheck())
+		{
+			m_ctrl_ram_check_alglib.SetCheck(true);
+		}
+		else
+		{
+			m_ctrl_ram_check_alglib.SetCheck(false);
+		}
+	}
+}
+
+
+void CFPGA_Memory_SetDlg::OnBnClickedCheckRamAlglib()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	if ((m_combox_ram_selenc.GetCurSel() == MODE_HY328A_SPW_201703) && (m_combox_form.GetCurSel() == FILE_RCF_ENC))
+	{
+		if (m_ctrl_ram_check_alglib.GetCheck())
+		{
+			m_ctrl_ram_check_prom.SetCheck(true);
+		}
+		else
+		{
+			m_ctrl_ram_check_prom.SetCheck(false);
+		}
+	}
 }
