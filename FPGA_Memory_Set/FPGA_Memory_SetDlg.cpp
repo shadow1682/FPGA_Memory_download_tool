@@ -647,6 +647,10 @@ void CFPGA_Memory_SetDlg::Func_Enable(bool bEnable)
 
 unsigned char buffer_PROM[ADD_LEN] = { 0 }, buffer_ATMC[ADD_LEN] = { 0 }, buffer_TROM[ADD_LEN] = { 0 };
 unsigned char gPromAlglibHexStd[ADD_LEN] = { 0 },gPromAlglibHexFre[ADD_LEN] = { 0 }, gPromAlglibRcf[ADD_LEN] = { 0 }, gHexStdEnc[ADD_LEN_PROM_ATMC] = { 0 };
+int iflag_1_rcf = 0, iflag_2_rcf = 0, iflag_3_rcf = 0,//load file flag
+	iflag_prom_rcf = 0, iflag_alglib_rcf = 0, iflag_trom_rcf = 0, iflag_4K_rcf = 0,
+	iflag_prom_std = 0, iflag_alglib_std = 0, iflag_trom_std = 0,
+	iflag_prom_ctm = 0, iflag_alglib_ctm = 0, iflag_trom_ctm = 0, iflag_loop = 0;
 
 BOOL CFPGA_Memory_SetDlg::FileOpen(int iFileType,int iTrasAdd,CString fileTitle)
 {
@@ -1096,8 +1100,12 @@ void CFPGA_Memory_SetDlg::OnBnClickedButtonRamOpenfile()
 				//load the first rcf file
 				iTrasAdd = 0;
 				m_ctrl_fpgalog.SetSel(-1, -1);
-				m_ctrl_fpgalog.ReplaceSel("First '64K rcf'file:\r\n");
-				if (FileOpen(FILE_TYPE_NOSTD_RCF, iTrasAdd,"Rcf file")) MessageBox("Completed!Please load the second Rcf file.", "Rcf Download", MB_ICONINFORMATION);
+				m_ctrl_fpgalog.ReplaceSel("-->>>-->>>--No.1 '64K rcf'file:-->>>-->>>--\r\n");
+				if (FileOpen(FILE_TYPE_NOSTD_RCF, iTrasAdd, "No.1 Rcf file"))
+				{
+					iflag_1_rcf = 1;
+					MessageBox("Completed!Please load No.2 Rcf file.", "Rcf Download", MB_ICONINFORMATION);
+				}
 				else
 				{
 					m_ctrl_fpgalog.SetSel(-1, -1);
@@ -1108,15 +1116,23 @@ error2:				m_ctrl_fpgalog.ReplaceSel("Load file error\r\n");
 				//load the second rcf file
 				iTrasAdd = 64 * 1024;
 				m_ctrl_fpgalog.SetSel(-1, -1);
-				m_ctrl_fpgalog.ReplaceSel("Second '64K rcf'file:\r\n");
-				if (FileOpen(FILE_TYPE_NOSTD_RCF, iTrasAdd, "Rcf file")) MessageBox("Completed!Please load the third Rcf file.", "Rcf Download", MB_ICONINFORMATION);
+				m_ctrl_fpgalog.ReplaceSel("-->>>-->>>--No.2 '64K rcf'file:-->>>-->>>--\r\n");
+				if (FileOpen(FILE_TYPE_NOSTD_RCF, iTrasAdd, "No.2 Rcf file"))
+				{
+					iflag_2_rcf = 1;
+					MessageBox("Completed!Please load No.3 Rcf file.", "Rcf Download", MB_ICONINFORMATION);
+				}
 				else goto error2;
 
 				//load the third rcf file
 				iTrasAdd = 128 * 1024;
 				m_ctrl_fpgalog.SetSel(-1, -1);
-				m_ctrl_fpgalog.ReplaceSel("Third '64K rcf'file:\r\n");
-				if (FileOpen(FILE_TYPE_NOSTD_RCF, iTrasAdd, "Rcf file")) MessageBox("Completed!", "Rcf Download", MB_ICONINFORMATION);
+				m_ctrl_fpgalog.ReplaceSel("-->>>-->>>--No.3 '64K rcf'file:-->>>-->>>--\r\n");
+				if (FileOpen(FILE_TYPE_NOSTD_RCF, iTrasAdd, "No.3 Rcf file"))
+				{
+					iflag_3_rcf = 1;
+					MessageBox("Rcf file completed!", "Rcf Download", MB_ICONINFORMATION);
+				}
 				else goto error2;
 
 				memcpy_s(&buffer_PROM[0], ADD_LEN, &gPromAlglibRcf[0], ADD_LEN_PROM);
@@ -1129,72 +1145,82 @@ error2:				m_ctrl_fpgalog.ReplaceSel("Load file error\r\n");
 			{
 				iTrasAdd = 0;//standard prom rcf
 				m_ctrl_fpgalog.SetSel(-1, -1);
-				m_ctrl_fpgalog.ReplaceSel("Prom rcf file:\r\n");
+				m_ctrl_fpgalog.ReplaceSel("-->>>-->>>--Prom rcf file:-->>>-->>>--\r\n");
 				if(!FileOpen(FILE_TYPE_RCF_STD_PROM, iTrasAdd,"Prom file"))goto error2;
+				else iflag_prom_rcf = 1;
 			}
 			if (m_ctrl_ram_check_alglib.GetCheck())
 			{
 				iTrasAdd = 0x28000;//standard alglib rcf
 				m_ctrl_fpgalog.SetSel(-1, -1);
-				m_ctrl_fpgalog.ReplaceSel("Alglib rcf file:\r\n");
+				m_ctrl_fpgalog.ReplaceSel("-->>>-->>>--Alglib rcf file:-->>>-->>>--\r\n");
 				if(!FileOpen(FILE_TYPE_RCF_STD_ALGLIB, iTrasAdd, "Alglib file"))goto error2;
+				else iflag_alglib_rcf = 1;
 			}
 		}
 		if (m_ctrl_ram_check_4K.GetCheck())
 		{
 			iTrasAdd = 0x30000;
 			m_ctrl_fpgalog.SetSel(-1, -1);
-			m_ctrl_fpgalog.ReplaceSel("4K rcf file:\r\n");
+			m_ctrl_fpgalog.ReplaceSel("-->>>-->>>--4K rcf file:-->>>-->>>--\r\n");
 			if(!FileOpen(FILE_TYPE_RCF_STD_4K, iTrasAdd, "4K file"))goto error2;
+			else iflag_4K_rcf = 1;
 		}
 		if (m_ctrl_ram_check_trom.GetCheck())
 		{
 			iTrasAdd = 0x40000;
 			m_ctrl_fpgalog.SetSel(-1, -1);
-			m_ctrl_fpgalog.ReplaceSel("Trom rcf file:\r\n");
+			m_ctrl_fpgalog.ReplaceSel("-->>>-->>>--Trom rcf file:-->>>-->>>--\r\n");
 			if(!FileOpen(FILE_TYPE_RCF_STD_TROM, iTrasAdd, "Trom file"))goto error2;
+			else iflag_trom_rcf = 1;
 		}
 	}
 	else if (m_combox_form.GetCurSel() == FILE_HEX_STAND_NOENC)//standard file format
 	{
 		if (m_ctrl_ram_check_prom.GetCheck())
 		{
-			iTrasAdd = 0;//standard prom rcf
-			m_ctrl_fpgalog.ReplaceSel("Prom hex file:\r\n");
+			iTrasAdd = 0;//standard prom 
+			m_ctrl_fpgalog.ReplaceSel("-->>>-->>>--Prom hex file:-->>>-->>>--\r\n");
 			if(!FileOpen(FILE_TYPE_STD_PROM, iTrasAdd, "Prom file"))goto error2;
+			else iflag_prom_std = 1;
 		}
 		if (m_ctrl_ram_check_alglib.GetCheck())
 		{
-			iTrasAdd = 0x28000;//standard alglib rcf
-			m_ctrl_fpgalog.ReplaceSel("Alglib hex file:\r\n");
+			iTrasAdd = 0x28000;//standard alglib
+			m_ctrl_fpgalog.ReplaceSel("-->>>-->>>--Alglib hex file:-->>>-->>>--\r\n");
 			if(!FileOpen(FILE_TYPE_STD_ALGLIB, iTrasAdd, "Alglib file"))goto error2;
+			else iflag_alglib_std = 1;
 		}
 		if (m_ctrl_ram_check_trom.GetCheck())
 		{
 			iTrasAdd = 0x40000;
-			m_ctrl_fpgalog.ReplaceSel("Trom hex file:\r\n");
+			m_ctrl_fpgalog.ReplaceSel("-->>>-->>>--Trom hex file:-->>>-->>>--\r\n");
 			if(!FileOpen(FILE_TYPE_STD_TROM, iTrasAdd, "Trom file"))goto error2;
+			else iflag_trom_std = 1;
 		}
 	}
-	else//customize format
+	else//customsized format
 	{
 		if (m_ctrl_ram_check_prom.GetCheck())
 		{
-			iTrasAdd = 0;//standard prom rcf
-			m_ctrl_fpgalog.ReplaceSel("Prom customized hex file:\r\n");
+			iTrasAdd = 0;//customsized prom
+			m_ctrl_fpgalog.ReplaceSel("-->>>-->>>--Prom customized hex file:-->>>-->>>--\r\n");
 			if(!FileOpen(FILE_TYPE_CUSTOMIZE_PROM, iTrasAdd, "Prom file"))goto error2;
+			else iflag_prom_ctm = 1;
 		}
 		if (m_ctrl_ram_check_alglib.GetCheck())
 		{
-			iTrasAdd = 0x28000;//standard alglib rcf
-			m_ctrl_fpgalog.ReplaceSel("Alglib customized hex file:\r\n");
+			iTrasAdd = 0x28000;//customsized alglib
+			m_ctrl_fpgalog.ReplaceSel("-->>>-->>>--Alglib customized hex file:-->>>-->>>--\r\n");
 			if(!FileOpen(FILE_TYPE_CUSTOMIZE_ALGLIB, iTrasAdd, "Alglib file"))goto error2;
+			else iflag_alglib_ctm = 1;
 		}
 		if (m_ctrl_ram_check_trom.GetCheck())
 		{
-			iTrasAdd = 0x40000;
-			m_ctrl_fpgalog.ReplaceSel("Trom customized hex file:\r\n");
+			iTrasAdd = 0x40000;//customsized trom
+			m_ctrl_fpgalog.ReplaceSel("-->>>-->>>--Trom customized hex file:-->>>-->>>--\r\n");
 			if(!FileOpen(FILE_TYPE_CUSTOMIZE_TROM, iTrasAdd, "Trom file"))goto error2;
+			else iflag_trom_ctm = 1;
 		}
 	}
 }
@@ -1268,29 +1294,56 @@ error1: cMyDlg->MessageBox("Format error：Romkey", "ERROR_ROMKEY", MB_ICONEXCLAM
 
 	transCStringbuffer(STR_ROMKEY,ROMKEY_UC);
 
-	//按照WORD格式转换
-	if(cMyDlg->m_combox_form.GetCurSel() == FILE_RCF_ENC)//RCF文件
-	{
-		if (cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328A_SPW_201703)
-		{
-			if (cMyDlg->check_PROM == TRUE)//PROM&ALGLIB分成3个64K文件载入
-			{
-				//载入第一个文件
-				//载入第二个文件
-				//载入第三个文件
 
-				data_len[0] = 0x00;
+	if (cMyDlg->m_combox_form.GetCurSel() == FILE_RCF_ENC)//RCF文件
+		if (cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328A_SPW_201703)
+	iflag_loop = iflag_1_rcf + iflag_2_rcf + iflag_3_rcf + 
+		iflag_prom_rcf + iflag_alglib_rcf + iflag_trom_rcf + 
+		iflag_4K_rcf + iflag_prom_std + iflag_alglib_std + iflag_trom_std +
+		iflag_prom_ctm + iflag_alglib_ctm + iflag_trom_ctm;
+
+	for (int iloop = 0;iloop < iflag_loop;iloop++)
+	{
+		//按照WORD格式转换
+				if (iflag_1_rcf == 1 && iflag_2_rcf == 1 && iflag_3_rcf == 1 )//PROM&ALGLIB分成3个64K文件载入
+				{
+					data_len[0] = 0x00;
+					data_len[1] = 0x00;
+					data_len[2] = 0x00;
+					goto;
+				}
+				if (cMyDlg->check_ATMC == TRUE)//算法库
+				{
+					data_len[0] = 0x02;
+					data_len[1] = 0x80;
+					data_len[2] = 0x00;
+				}
+			}
+			else
+			{
+				if (cMyDlg->check_PROM == TRUE)//PROM
+				{
+					data_len[0] = 0x00;
+					data_len[1] = 0x00;
+					data_len[2] = 0x00;
+
+				}
+				else if (cMyDlg->check_ATMC == TRUE)//算法库
+				{
+					data_len[0] = 0x02;
+					data_len[1] = 0x80;
+					data_len[2] = 0x00;
+
+				}
+			}
+			if (cMyDlg->check_TROM == TRUE)//TROM
+			{
+				data_len[0] = 0x04;
 				data_len[1] = 0x00;
 				data_len[2] = 0x00;
 			}
-			else if (cMyDlg->check_ATMC == TRUE)//算法库
-			{
-				data_len[0] = 0x02;
-				data_len[1] = 0x80;
-				data_len[2] = 0x00;
-			}
 		}
-		else
+		else if (cMyDlg->m_combox_form.GetCurSel() == FILE_HEX_STAND_NOENC)//按照HEX标准格式转换
 		{
 			if (cMyDlg->check_PROM == TRUE)//PROM
 			{
@@ -1298,6 +1351,184 @@ error1: cMyDlg->MessageBox("Format error：Romkey", "ERROR_ROMKEY", MB_ICONEXCLAM
 				data_len[1] = 0x00;
 				data_len[2] = 0x00;
 
+				if (cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328A_SPW_201703)//328A SPW 192K数据处理
+				{
+					memcpy_s(&gPromAlglibHexStd[0], ADD_LEN, &buffer_PROM[0], ADD_LEN_PROM);
+					cMyDlg->MessageBox("pcos文件加载完成，请加载一个算法库文件", "FPGA Memory Set", MB_ICONINFORMATION);
+					goto Step2;
+				}
+
+				//数据转换完成，进行加密
+
+				if (cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY188B_201512 || cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328Av1_0_201604)
+				{
+					Hex_188B_Enc(ROMKEY_UC, ADD_LEN_PROM, buffer_PROM, PROM_Enc);//188B
+				}
+				else if (cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328Av2_0_201609 ||
+					cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY128Av1_0_201609)
+				{
+					Hex_328A_Enc(ROMKEY_UC, ADD_LEN_PROM, buffer_PROM, PROM_Enc);//328A
+				}
+
+				//file.Close();//关闭文件
+			}
+			if (cMyDlg->check_ATMC == TRUE)//算法库
+			{
+				if (cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328A_SPW_201703)goto Step3;
+
+			Step2:		/*cMyDlg->SetDlgItemText(IDC_STATUES, "打开文档...");
+
+						CFileDialog dlg(TRUE, NULL, NULL, OFN_EXPLORER | OFN_HIDEREADONLY | OFN_ENABLESIZING | OFN_FILEMUSTEXIST, "Hex Files(*.hex)|*.hex|All Files (*.*)|*.*||");
+
+						if (dlg.DoModal() != IDOK)
+						{
+							cMyDlg->Func_Enable(TRUE);
+							return false;
+						}
+
+						//获得文件路径
+						CString strPathName = dlg.GetPathName();
+						CStdioFile file;
+
+						//打开文件
+						if (!file.Open(strPathName, CFile::modeRead))
+						{
+							cMyDlg->MessageBox("Load file error.", "ERROR！", MB_ICONEXCLAMATION);
+							cMyDlg->Func_Enable(TRUE);
+							return false;
+						}
+						while (file.ReadString(strText))
+						{
+							if (strText[0] != ':')//检测信息错误行
+							{
+								cMyDlg->MessageBox("算法库文档中存在错误数据，错误信息为:" + strText, "ERROR！", MB_ICONEXCLAMATION);
+								cMyDlg->SetDlgItemText(IDC_STATUES, "算法库文档中存在错误数据，错误信息为:" + strText);
+								cMyDlg->Func_Enable(TRUE);
+								return false;
+							}
+
+							strText.Remove(':');
+
+							if (strText[7] != '0')
+							{
+								if (strText[7] == '4')
+								{
+									if (strText[11] == '2')
+									{
+										tras_buf0_ATMC = 2;
+										continue;
+									}
+									else
+									{
+										cMyDlg->MessageBox("算法库文档中存在错误线性扩展地址，错误信息：:" + strText, "ERROR！", MB_ICONEXCLAMATION);
+										cMyDlg->SetDlgItemText(IDC_STATUES, "错误信息:" + strText);
+										cMyDlg->Func_Enable(TRUE);
+										return false;
+									}
+								}
+								else if (strText[7] == '1')break;//文件结束标志
+								else continue;//数据错误行，跳过       **********此处标志位保留以后继续扩展***********
+							}
+
+							transCStringbuffer(strText, trans_buffer);//数据行转换
+
+							tras_buf1_ATMC = trans_buffer[1];
+							tras_buf2_ATMC = trans_buffer[2];
+							tras_add_ATMC = (tras_buf0_ATMC << 16) | (tras_buf1_ATMC << 8) | tras_buf2_ATMC;
+
+							if((tras_add_ATMC < 0x28000) || (tras_add_ATMC > 0x2FFFF))
+							{
+								cMyDlg->MessageBox("错误的算法库文档！", "ERROR!", MB_ICONEXCLAMATION);
+								cMyDlg->SetDlgItemText(IDC_STATUES, "错误的算法库文档");
+								cMyDlg->Func_Enable(TRUE);
+								return false;
+							}
+
+							for (m_1_ATMC = 0; m_1_ATMC < trans_buffer[0]; m_1_ATMC++)//将数据存入buffer中
+							{
+								buffer_ATMC[tras_add_ATMC + m_1_ATMC] = trans_buffer[m_1_ATMC + 4];
+							}
+						}*/
+				data_len[0] = 0x02;
+				data_len[1] = 0x80;
+				data_len[2] = 0x00;
+
+				if (cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328A_SPW_201703)//328A SPW 192K数据处理
+				{
+					memcpy_s(&gPromAlglibHexStd[0x28000], ADD_LEN, &buffer_ATMC[0x28000], ADD_LEN_ATMC);
+				}
+
+				if (cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY188B_201512 || cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328Av1_0_201604)
+				{
+					Hex_188B_Enc(ROMKEY_UC, ADD_LEN_ATMC, &buffer_ATMC[0x28000], ATMC_Enc);//188B老算法
+				}
+				else if (cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328Av2_0_201609 ||
+					cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY128Av1_0_201609)
+				{
+					Hex_328A_Enc(ROMKEY_UC, ADD_LEN_ATMC, &buffer_ATMC[0x28000], ATMC_Enc);//西蒙算法
+				}
+				//file.Close();//关闭文件
+			}
+
+			if (cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328A_SPW_201703)//328A SPW 192K数据处理
+			{
+				Hex_328A_Enc64K(ROMKEY_UC, ADD_LEN_PROM_ATMC, &gPromAlglibHexStd[0], gHexStdEnc);
+
+				if (cMyDlg->check_PROM == TRUE)
+				{
+					data_len[0] = 0x00;
+					data_len[1] = 0x00;
+					data_len[2] = 0x00;
+					memcpy_s(&PROM_Enc[0], ADD_LEN_PROM, &gHexStdEnc[0], ADD_LEN_PROM);
+				}
+			Step3: 		if (cMyDlg->check_ATMC == TRUE)
+			{
+				data_len[0] = 0x02;
+				data_len[1] = 0x80;
+				data_len[2] = 0x00;
+				memcpy_s(&ATMC_Enc[0], ADD_LEN_ATMC, &gHexStdEnc[0x28000], ADD_LEN_ATMC);
+			}
+			}
+
+			if (cMyDlg->check_TROM == TRUE)//TROM
+			{
+				data_len[0] = 0x04;
+				data_len[1] = 0x00;
+				data_len[2] = 0x00;
+
+				if (cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY188B_201512 || cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328Av1_0_201604)
+				{
+					Hex_188B_Enc(ROMKEY_UC, ADD_LEN_TROM, &buffer_TROM[0x40000], TROM_Enc);
+				}
+				else if (cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328Av2_0_201609 ||
+					cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY128Av1_0_201609 ||
+					cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328A_SPW_201703)
+				{
+					Hex_328A_Enc(ROMKEY_UC, ADD_LEN_TROM, &buffer_TROM[0x40000], TROM_Enc);
+				}
+				//file.Close();//关闭文件
+			}
+		}
+		else//自定义HEX文件格式
+		{
+			if (cMyDlg->check_PROM == TRUE)//PROM
+			{
+				data_len[0] = 0x00;
+				data_len[1] = 0x00;
+				data_len[2] = 0x00;
+
+				//数据转换完成，进行加密
+				if (cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY188B_201512 || cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328Av1_0_201604)
+				{
+					Hex_188B_Enc(ROMKEY_UC, ADD_LEN_PROM, buffer_PROM, PROM_Enc);//188B
+				}
+				else if (cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328Av2_0_201609 ||
+					cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY128Av1_0_201609 ||
+					cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328A_SPW_201703)
+				{
+					Hex_328A_Enc(ROMKEY_UC, ADD_LEN_PROM, buffer_PROM, PROM_Enc);//328A
+				}
+
 			}
 			else if (cMyDlg->check_ATMC == TRUE)//算法库
 			{
@@ -1305,481 +1536,280 @@ error1: cMyDlg->MessageBox("Format error：Romkey", "ERROR_ROMKEY", MB_ICONEXCLAM
 				data_len[1] = 0x80;
 				data_len[2] = 0x00;
 
-			}
-		}
-		if (cMyDlg->check_TROM == TRUE)//TROM
-		{
-			data_len[0] = 0x04;
-			data_len[1] = 0x00;
-			data_len[2] = 0x00;
-		}
-	}
-	else if(cMyDlg->m_combox_form.GetCurSel() == FILE_HEX_STAND_NOENC)//按照HEX标准格式转换
-	{
-		if (cMyDlg->check_PROM == TRUE)//PROM
-		{
-			data_len[0] = 0x00;
-			data_len[1] = 0x00;
-			data_len[2] = 0x00;
-
-			if (cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328A_SPW_201703)//328A SPW 192K数据处理
-			{
-				memcpy_s(&gPromAlglibHexStd[0], ADD_LEN, &buffer_PROM[0], ADD_LEN_PROM);
-				cMyDlg->MessageBox("pcos文件加载完成，请加载一个算法库文件", "FPGA Memory Set", MB_ICONINFORMATION);
-				goto Step2;
-			}
-
-			//数据转换完成，进行加密
-
-			if (cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY188B_201512 || cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328Av1_0_201604)
-			{
-				Hex_188B_Enc(ROMKEY_UC, ADD_LEN_PROM, buffer_PROM, PROM_Enc);//188B
-			}
-			else if (cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328Av2_0_201609 || 
-					 cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY128Av1_0_201609)
-			{
-				Hex_328A_Enc(ROMKEY_UC, ADD_LEN_PROM, buffer_PROM, PROM_Enc);//328A
-			}
-
-			//file.Close();//关闭文件
-		}
-		if (cMyDlg->check_ATMC == TRUE)//算法库
-		{
-			if (cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328A_SPW_201703)goto Step3;
-
-Step2:		/*cMyDlg->SetDlgItemText(IDC_STATUES, "打开文档...");
-
-			CFileDialog dlg(TRUE, NULL, NULL, OFN_EXPLORER | OFN_HIDEREADONLY | OFN_ENABLESIZING | OFN_FILEMUSTEXIST, "Hex Files(*.hex)|*.hex|All Files (*.*)|*.*||");
-
-			if (dlg.DoModal() != IDOK)
-			{
-				cMyDlg->Func_Enable(TRUE);
-				return false;
-			}
-
-			//获得文件路径
-			CString strPathName = dlg.GetPathName();
-			CStdioFile file;
-
-			//打开文件
-			if (!file.Open(strPathName, CFile::modeRead))
-			{
-				cMyDlg->MessageBox("Load file error.", "ERROR！", MB_ICONEXCLAMATION);
-				cMyDlg->Func_Enable(TRUE);
-				return false;
-			}
-			while (file.ReadString(strText))
-			{
-				if (strText[0] != ':')//检测信息错误行
+				if (cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY188B_201512 || cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328Av1_0_201604)
 				{
-					cMyDlg->MessageBox("算法库文档中存在错误数据，错误信息为:" + strText, "ERROR！", MB_ICONEXCLAMATION);
-					cMyDlg->SetDlgItemText(IDC_STATUES, "算法库文档中存在错误数据，错误信息为:" + strText);
-					cMyDlg->Func_Enable(TRUE);
-					return false;
+					Hex_188B_Enc(ROMKEY_UC, ADD_LEN_ATMC, &buffer_ATMC[0x28000], ATMC_Enc);
+				}
+				else if (cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328Av2_0_201609 ||
+					cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY128Av1_0_201609 ||
+					cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328A_SPW_201703)
+				{
+					Hex_328A_Enc(ROMKEY_UC, ADD_LEN_ATMC, &buffer_ATMC[0x28000], ATMC_Enc);
 				}
 
-				strText.Remove(':');
-
-				if (strText[7] != '0')
-				{
-					if (strText[7] == '4')
-					{
-						if (strText[11] == '2')
-						{
-							tras_buf0_ATMC = 2;
-							continue;
-						}
-						else
-						{
-							cMyDlg->MessageBox("算法库文档中存在错误线性扩展地址，错误信息：:" + strText, "ERROR！", MB_ICONEXCLAMATION);
-							cMyDlg->SetDlgItemText(IDC_STATUES, "错误信息:" + strText);
-							cMyDlg->Func_Enable(TRUE);
-							return false;
-						}
-					}
-					else if (strText[7] == '1')break;//文件结束标志
-					else continue;//数据错误行，跳过       **********此处标志位保留以后继续扩展***********
-				}
-
-				transCStringbuffer(strText, trans_buffer);//数据行转换
-
-				tras_buf1_ATMC = trans_buffer[1];
-				tras_buf2_ATMC = trans_buffer[2];
-				tras_add_ATMC = (tras_buf0_ATMC << 16) | (tras_buf1_ATMC << 8) | tras_buf2_ATMC;
-
-				if((tras_add_ATMC < 0x28000) || (tras_add_ATMC > 0x2FFFF))
-				{
-					cMyDlg->MessageBox("错误的算法库文档！", "ERROR!", MB_ICONEXCLAMATION);
-					cMyDlg->SetDlgItemText(IDC_STATUES, "错误的算法库文档");
-					cMyDlg->Func_Enable(TRUE);
-					return false;
-				}
-
-				for (m_1_ATMC = 0; m_1_ATMC < trans_buffer[0]; m_1_ATMC++)//将数据存入buffer中
-				{
-					buffer_ATMC[tras_add_ATMC + m_1_ATMC] = trans_buffer[m_1_ATMC + 4];
-				}
-			}*/
-			data_len[0] = 0x02;
-			data_len[1] = 0x80;
-			data_len[2] = 0x00;
-
-			if (cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328A_SPW_201703)//328A SPW 192K数据处理
-			{
-				memcpy_s(&gPromAlglibHexStd[0x28000], ADD_LEN, &buffer_ATMC[0x28000], ADD_LEN_ATMC);
 			}
-
-			if (cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY188B_201512 || cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328Av1_0_201604)
+			else//TROM
 			{
-				Hex_188B_Enc(ROMKEY_UC, ADD_LEN_ATMC, &buffer_ATMC[0x28000], ATMC_Enc);//188B老算法
-			}
-			else if (cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328Av2_0_201609 ||
-					 cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY128Av1_0_201609)
-			{
-				Hex_328A_Enc(ROMKEY_UC, ADD_LEN_ATMC, &buffer_ATMC[0x28000], ATMC_Enc);//西蒙算法
-			}
-			//file.Close();//关闭文件
-		}
 
-		if (cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328A_SPW_201703)//328A SPW 192K数据处理
-		{
-			Hex_328A_Enc64K(ROMKEY_UC, ADD_LEN_PROM_ATMC, &gPromAlglibHexStd[0], gHexStdEnc);
-
-			if (cMyDlg->check_PROM == TRUE)
-			{
-				data_len[0] = 0x00;
+				data_len[0] = 0x04;
 				data_len[1] = 0x00;
 				data_len[2] = 0x00;
-				memcpy_s(&PROM_Enc[0], ADD_LEN_PROM, &gHexStdEnc[0], ADD_LEN_PROM);
-			}
-Step3: 		if (cMyDlg->check_ATMC == TRUE)
-			{
-				data_len[0] = 0x02;
-				data_len[1] = 0x80;
-				data_len[2] = 0x00;
-				memcpy_s(&ATMC_Enc[0], ADD_LEN_ATMC, &gHexStdEnc[0x28000], ADD_LEN_ATMC);
-			}
-		}
 
-		if (cMyDlg->check_TROM == TRUE)//TROM
-		{
-			data_len[0] = 0x04;
-			data_len[1] = 0x00;
-			data_len[2] = 0x00;
-
-			if (cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY188B_201512 || cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328Av1_0_201604)
-			{
-				Hex_188B_Enc(ROMKEY_UC, ADD_LEN_TROM, &buffer_TROM[0x40000], TROM_Enc);
-			}
-			else if (cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328Av2_0_201609 ||
-					 cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY128Av1_0_201609 ||
-					 cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328A_SPW_201703)
-			{
-				Hex_328A_Enc(ROMKEY_UC, ADD_LEN_TROM, &buffer_TROM[0x40000], TROM_Enc);
-			}
-			//file.Close();//关闭文件
-		}
-	}
-	else//自定义HEX文件格式
-	{
-		if (cMyDlg->check_PROM == TRUE)//PROM
-		{
-			data_len[0] = 0x00;
-			data_len[1] = 0x00;
-			data_len[2] = 0x00;
-
-			//数据转换完成，进行加密
-			if (cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY188B_201512 || cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328Av1_0_201604)
-			{
-				Hex_188B_Enc(ROMKEY_UC, ADD_LEN_PROM, buffer_PROM, PROM_Enc);//188B
-			}
-			else if (cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328Av2_0_201609 ||
-					 cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY128Av1_0_201609 ||
-					 cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328A_SPW_201703)
-			{
-				Hex_328A_Enc(ROMKEY_UC, ADD_LEN_PROM, buffer_PROM, PROM_Enc);//328A
-			}
-
-		}
-		else if (cMyDlg->check_ATMC == TRUE)//算法库
-		{
-			data_len[0] = 0x02;
-			data_len[1] = 0x80;
-			data_len[2] = 0x00;
-
-			if (cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY188B_201512 || cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328Av1_0_201604)
-			{
-				Hex_188B_Enc(ROMKEY_UC, ADD_LEN_ATMC, &buffer_ATMC[0x28000], ATMC_Enc);
-			}
-			else if (cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328Av2_0_201609 ||
-					 cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY128Av1_0_201609 ||
-					 cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328A_SPW_201703)
-			{
-				Hex_328A_Enc(ROMKEY_UC, ADD_LEN_ATMC, &buffer_ATMC[0x28000], ATMC_Enc);
-			}
-
-		}
-		else//TROM
-		{
-			
-			data_len[0] = 0x04;
-			data_len[1] = 0x00;
-			data_len[2] = 0x00;
-
-			if (cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY188B_201512 || cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328Av1_0_201604)
-			{
-				Hex_188B_Enc(ROMKEY_UC, ADD_LEN_TROM, &buffer_TROM[0x40000], TROM_Enc);
-			}
-			else if (cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328Av2_0_201609 ||
-					 cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY128Av1_0_201609 ||
-					 cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328A_SPW_201703)
-			{
-				Hex_328A_Enc(ROMKEY_UC, ADD_LEN_TROM, &buffer_TROM[0x40000], TROM_Enc);
-			}
-
-			//file.Close();//关闭文件
-		}
-	}
-
-	//发送地址
-
-	USBBulkWriteData(0, EP1_OUT, (char*)data_len, EP1_OUT_SIZE, 500);
-
-	if (cMyDlg->check_PROM == TRUE) USBBulkReadData(0, EP1_IN, (char*)recv_buffer, EP1_IN_SIZE, 500);
-	else if(cMyDlg->check_ATMC == TRUE) USBBulkReadData(0, EP1_IN, (char*)recv_buffer, EP1_IN_SIZE, 2000);
-	else USBBulkReadData(0, EP1_IN, (char*)recv_buffer, EP1_IN_SIZE, 4000);
-
-
-	if (recv_buffer[3] != 0x10)
-	{
-		cMyDlg->MessageBox("地址设置失败，请检查设备并对设备进行重新上电", "ERROR！", MB_ICONEXCLAMATION);
-		cMyDlg->m_ctrl_fpgalog.ReplaceSel("地址设置失败，请检查设备并对设备进行重新上电");
-
-		cMyDlg->Func_Enable(TRUE);
-		return false;
-	}
-	memset(recv_buffer, 0, 1024);
-
-	//界面初始化
-
-	cMyDlg->SetDlgItemText(IDC_Persent,"%0");
-
-	m_persent = 0;
-
-	//已转换的数据保存为字符串格式
-
-	CString STR1 = _T("");
-
-	STR2 = _T("");
-
-	unsigned char trs_buffer[LEN_BUF_STR] = { 0 };
-
-	if (cMyDlg->check_PROM == TRUE)
-	{
-		for (int h = 0; h < ADD_LEN_PROM; h += LEN_BUF_STR)
-		{
-			if ((cMyDlg->m_ctrl_check_RamEncEn.GetCheck()) && (cMyDlg->m_combox_form.GetCurSel() != FILE_RCF_ENC))//加密条件
-			{
-				memcpy(&trs_buffer[0], &PROM_Enc[h], LEN_BUF_STR);
-			}
-			else memcpy(&trs_buffer[0], &buffer_PROM[h], LEN_BUF_STR);
-			STR1 = transResult(trs_buffer, LEN_BUF_STR);
-			STR2 += STR1;
-
-			memset(trs_buffer, 0, LEN_BUF_STR);
-		}
-	}
-	else if (cMyDlg->check_ATMC == TRUE)
-	{
-		for (int h = 0; h<ADD_LEN_ATMC; h += LEN_BUF_STR)
-		{
-			if ((cMyDlg->m_ctrl_check_RamEncEn.GetCheck()) && (cMyDlg->m_combox_form.GetCurSel() != FILE_RCF_ENC))
-			{
-				memcpy(&trs_buffer[0], &ATMC_Enc[h], LEN_BUF_STR);
-			}
-			else
-			{
-				memcpy(&trs_buffer[0], &buffer_ATMC[h+0x28000], LEN_BUF_STR);
-			}
-			STR1 = transResult(trs_buffer, LEN_BUF_STR);
-			STR2 += STR1;
-
-			memset(trs_buffer,0,LEN_BUF_STR);
-		}
-	}
-	else
-	{
-		for (int h = 0; h<ADD_LEN_TROM; h += LEN_BUF_STR)
-		{
-			if ((cMyDlg->m_ctrl_check_RamEncEn.GetCheck()) && (cMyDlg->m_combox_form.GetCurSel() != FILE_RCF_ENC))
-			{
-				memcpy(&trs_buffer[0], &TROM_Enc[h], LEN_BUF_STR);
-			}
-			else
-			{
-				memcpy(&trs_buffer[0], &buffer_TROM[h+0x40000], LEN_BUF_STR);
-			}
-			STR1 = transResult(trs_buffer, LEN_BUF_STR);
-			STR2 += STR1;
-
-			memset(trs_buffer,0,LEN_BUF_STR);
-		}
-	}
-
-	CString ram_strrun;
-
-	if (cMyDlg->check_PROM == TRUE)
-	{
-		while (m_all<ADD_LEN_PROM)//发送数据
-		{
-			for (m_2 = 0; m_2<SEND_SIZE; m_2++)//64个数据一发
-			{
-				if ((cMyDlg->m_ctrl_check_RamEncEn.GetCheck()) && (cMyDlg->m_combox_form.GetCurSel() != FILE_RCF_ENC)) send_buffer[m_2] = PROM_Enc[m_all];
-				else send_buffer[m_2] = buffer_PROM[m_all];
-				m_all++;
-			}
-
-			USBBulkWriteData(0, EP1_OUT, (char*)send_buffer, SEND_SIZE, 500);
-
-			for (int m = 0; m<50; m++)
-			{
-				USBBulkReadData(0, EP1_IN, (char*)recv_buffer, EP1_IN_SIZE, 500);
-
-				if (recv_buffer[3] != 0x10)
+				if (cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY188B_201512 || cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328Av1_0_201604)
 				{
-					::Sleep(1);
-					continue;
+					Hex_188B_Enc(ROMKEY_UC, ADD_LEN_TROM, &buffer_TROM[0x40000], TROM_Enc);
 				}
-				else break;
-			}
-
-			memset(send_buffer, 0, SEND_SIZE);
-
-			ram_strrun.Format("%d", m_all / 1024);
-			cMyDlg->m_ctrl_fpgalog.ReplaceSel("发送数据中...已发送" + ram_strrun + "K(共160K)");
-
-			m_persent++;
-			persent.Format("%.0f%%", 100.0*(float)(m_persent - 0) / (float)(160 - 0));//显示进度比
-			cMyDlg->GetDlgItem(IDC_Persent)->SetWindowText(persent);
-		}
-	}
-	else if(cMyDlg->check_ATMC == TRUE)
-	{
-		while (m_all<ADD_LEN_ATMC)//发送数据
-		{
-
-			for (m_2 = 0; m_2<SEND_SIZE; m_2++)//64个数据一发
-			{
-				if ((cMyDlg->m_ctrl_check_RamEncEn.GetCheck()) && (cMyDlg->m_combox_form.GetCurSel() != FILE_RCF_ENC)) send_buffer[m_2] = ATMC_Enc[m_all];
-				else send_buffer[m_2] = buffer_ATMC[m_all+0x28000];
-				m_all++;
-			}
-
-			USBBulkWriteData(0, EP1_OUT, (char*)send_buffer, SEND_SIZE, 500);
-
-			for (int m = 0; m<50; m++)
-			{
-				USBBulkReadData(0, EP1_IN, (char*)recv_buffer, EP1_IN_SIZE, 500);
-
-				if (recv_buffer[3] != 0x10)
+				else if (cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328Av2_0_201609 ||
+					cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY128Av1_0_201609 ||
+					cMyDlg->m_combox_ram_selenc.GetCurSel() == MODE_HY328A_SPW_201703)
 				{
-					::Sleep(1);
-					continue;
+					Hex_328A_Enc(ROMKEY_UC, ADD_LEN_TROM, &buffer_TROM[0x40000], TROM_Enc);
 				}
-				else break;
+
+				//file.Close();//关闭文件
 			}
-
-			memset(send_buffer, 0, SEND_SIZE);
-
-			ram_strrun.Format("%d", m_all / 1024);
-			cMyDlg->m_ctrl_fpgalog.ReplaceSel("发送数据中...已发送" + ram_strrun + "K(共32K)");
-
-			m_persent++;
-			persent.Format("%.0f%%", 100.0*(float)(m_persent - 0) / (float)(32 - 0));//显示进度比
-			cMyDlg->GetDlgItem(IDC_Persent)->SetWindowText(persent);
 		}
-	}
-	else
-	{
-		while (m_all<ADD_LEN_TROM)//发送数据
+
+		//发送地址
+
+		USBBulkWriteData(0, EP1_OUT, (char*)data_len, EP1_OUT_SIZE, 500);
+
+		if (cMyDlg->check_PROM == TRUE) USBBulkReadData(0, EP1_IN, (char*)recv_buffer, EP1_IN_SIZE, 500);
+		else if (cMyDlg->check_ATMC == TRUE) USBBulkReadData(0, EP1_IN, (char*)recv_buffer, EP1_IN_SIZE, 2000);
+		else USBBulkReadData(0, EP1_IN, (char*)recv_buffer, EP1_IN_SIZE, 4000);
+
+
+		if (recv_buffer[3] != 0x10)
 		{
-
-			for (m_2 = 0; m_2<SEND_SIZE; m_2++)//64个数据一发
-			{
-				if ((cMyDlg->m_ctrl_check_RamEncEn.GetCheck()) && (cMyDlg->m_combox_form.GetCurSel() != FILE_RCF_ENC)) send_buffer[m_2] = TROM_Enc[m_all];
-				else send_buffer[m_2] = buffer_TROM[m_all+0x40000];
-				m_all++;
-			}
-
-			USBBulkWriteData(0, EP1_OUT, (char*)send_buffer, SEND_SIZE, 500);
-
-			for (int m = 0; m<50; m++)
-			{
-				USBBulkReadData(0, EP1_IN, (char*)recv_buffer, EP1_IN_SIZE, 500);
-
-				if (recv_buffer[3] != 0x10)
-				{
-					::Sleep(1);
-					continue;
-				}
-				else break;
-			}
-
-			memset(send_buffer, 0, SEND_SIZE);
-
-			ram_strrun.Format("%d", m_all / 1024);
-			cMyDlg->m_ctrl_fpgalog.ReplaceSel("发送数据中...已发送" + ram_strrun + "K(共32K)");
-
-			m_persent++;
-			persent.Format("%.0f%%", 100.0*(float)(m_persent - 0) / (float)(32 - 0));//显示进度比
-			cMyDlg->GetDlgItem(IDC_Persent)->SetWindowText(persent);
-		}
-	}
-
-	cMyDlg->m_ctrl_fpgalog.ReplaceSel("校验已发送数据...");
-	long check_t = 0;
-
-	while(check_t<1000)
-	{
-
-		USBBulkReadData(0,EP1_IN,(char*)recv_buffer,EP1_IN_SIZE,check_t);
-
-		if(recv_buffer[3] == 0x10)
-		{
-			cMyDlg->MessageBox("写RAM成功！","RAM操作",MB_ICONINFORMATION);
-
-			cMyDlg->m_ctrl_fpgalog.ReplaceSel("写RAM完成...");
-			memset(recv_buffer,0,1024);
-			break;
-		}
-		else if(recv_buffer[3] == 0xFF)
-		{
-			cMyDlg->MessageBox("写RAM失败!请检查设备并对设备进行重新上电","ERROR！", MB_ICONEXCLAMATION);
-			cMyDlg->m_ctrl_fpgalog.ReplaceSel("数据读取校验失败，请检查设备并对设备进行重新上电");
-			memset(recv_buffer,0,1024);
+			cMyDlg->MessageBox("地址设置失败，请检查设备并对设备进行重新上电", "ERROR！", MB_ICONEXCLAMATION);
+			cMyDlg->m_ctrl_fpgalog.ReplaceSel("地址设置失败，请检查设备并对设备进行重新上电");
 
 			cMyDlg->Func_Enable(TRUE);
 			return false;
 		}
-		else continue;
+		memset(recv_buffer, 0, 1024);
 
-		check_t += 10; 
+		//界面初始化
+
+		cMyDlg->SetDlgItemText(IDC_Persent, "%0");
+
+		m_persent = 0;
+
+		//已转换的数据保存为字符串格式
+
+		CString STR1 = _T("");
+
+		STR2 = _T("");
+
+		unsigned char trs_buffer[LEN_BUF_STR] = { 0 };
+
+		if (cMyDlg->check_PROM == TRUE)
+		{
+			for (int h = 0; h < ADD_LEN_PROM; h += LEN_BUF_STR)
+			{
+				if ((cMyDlg->m_ctrl_check_RamEncEn.GetCheck()) && (cMyDlg->m_combox_form.GetCurSel() != FILE_RCF_ENC))//加密条件
+				{
+					memcpy(&trs_buffer[0], &PROM_Enc[h], LEN_BUF_STR);
+				}
+				else memcpy(&trs_buffer[0], &buffer_PROM[h], LEN_BUF_STR);
+				STR1 = transResult(trs_buffer, LEN_BUF_STR);
+				STR2 += STR1;
+
+				memset(trs_buffer, 0, LEN_BUF_STR);
+			}
+		}
+		else if (cMyDlg->check_ATMC == TRUE)
+		{
+			for (int h = 0; h < ADD_LEN_ATMC; h += LEN_BUF_STR)
+			{
+				if ((cMyDlg->m_ctrl_check_RamEncEn.GetCheck()) && (cMyDlg->m_combox_form.GetCurSel() != FILE_RCF_ENC))
+				{
+					memcpy(&trs_buffer[0], &ATMC_Enc[h], LEN_BUF_STR);
+				}
+				else
+				{
+					memcpy(&trs_buffer[0], &buffer_ATMC[h + 0x28000], LEN_BUF_STR);
+				}
+				STR1 = transResult(trs_buffer, LEN_BUF_STR);
+				STR2 += STR1;
+
+				memset(trs_buffer, 0, LEN_BUF_STR);
+			}
+		}
+		else
+		{
+			for (int h = 0; h < ADD_LEN_TROM; h += LEN_BUF_STR)
+			{
+				if ((cMyDlg->m_ctrl_check_RamEncEn.GetCheck()) && (cMyDlg->m_combox_form.GetCurSel() != FILE_RCF_ENC))
+				{
+					memcpy(&trs_buffer[0], &TROM_Enc[h], LEN_BUF_STR);
+				}
+				else
+				{
+					memcpy(&trs_buffer[0], &buffer_TROM[h + 0x40000], LEN_BUF_STR);
+				}
+				STR1 = transResult(trs_buffer, LEN_BUF_STR);
+				STR2 += STR1;
+
+				memset(trs_buffer, 0, LEN_BUF_STR);
+			}
+		}
+
+		CString ram_strrun;
+
+		if (cMyDlg->check_PROM == TRUE)
+		{
+			while (m_all < ADD_LEN_PROM)//发送数据
+			{
+				for (m_2 = 0; m_2 < SEND_SIZE; m_2++)//64个数据一发
+				{
+					if ((cMyDlg->m_ctrl_check_RamEncEn.GetCheck()) && (cMyDlg->m_combox_form.GetCurSel() != FILE_RCF_ENC)) send_buffer[m_2] = PROM_Enc[m_all];
+					else send_buffer[m_2] = buffer_PROM[m_all];
+					m_all++;
+				}
+
+				USBBulkWriteData(0, EP1_OUT, (char*)send_buffer, SEND_SIZE, 500);
+
+				for (int m = 0; m < 50; m++)
+				{
+					USBBulkReadData(0, EP1_IN, (char*)recv_buffer, EP1_IN_SIZE, 500);
+
+					if (recv_buffer[3] != 0x10)
+					{
+						::Sleep(1);
+						continue;
+					}
+					else break;
+				}
+
+				memset(send_buffer, 0, SEND_SIZE);
+
+				ram_strrun.Format("%d", m_all / 1024);
+				cMyDlg->m_ctrl_fpgalog.ReplaceSel("发送数据中...已发送" + ram_strrun + "K(共160K)");
+
+				m_persent++;
+				persent.Format("%.0f%%", 100.0*(float)(m_persent - 0) / (float)(160 - 0));//显示进度比
+				cMyDlg->GetDlgItem(IDC_Persent)->SetWindowText(persent);
+			}
+		}
+		else if (cMyDlg->check_ATMC == TRUE)
+		{
+			while (m_all < ADD_LEN_ATMC)//发送数据
+			{
+
+				for (m_2 = 0; m_2 < SEND_SIZE; m_2++)//64个数据一发
+				{
+					if ((cMyDlg->m_ctrl_check_RamEncEn.GetCheck()) && (cMyDlg->m_combox_form.GetCurSel() != FILE_RCF_ENC)) send_buffer[m_2] = ATMC_Enc[m_all];
+					else send_buffer[m_2] = buffer_ATMC[m_all + 0x28000];
+					m_all++;
+				}
+
+				USBBulkWriteData(0, EP1_OUT, (char*)send_buffer, SEND_SIZE, 500);
+
+				for (int m = 0; m < 50; m++)
+				{
+					USBBulkReadData(0, EP1_IN, (char*)recv_buffer, EP1_IN_SIZE, 500);
+
+					if (recv_buffer[3] != 0x10)
+					{
+						::Sleep(1);
+						continue;
+					}
+					else break;
+				}
+
+				memset(send_buffer, 0, SEND_SIZE);
+
+				ram_strrun.Format("%d", m_all / 1024);
+				cMyDlg->m_ctrl_fpgalog.ReplaceSel("发送数据中...已发送" + ram_strrun + "K(共32K)");
+
+				m_persent++;
+				persent.Format("%.0f%%", 100.0*(float)(m_persent - 0) / (float)(32 - 0));//显示进度比
+				cMyDlg->GetDlgItem(IDC_Persent)->SetWindowText(persent);
+			}
+		}
+		else
+		{
+			while (m_all < ADD_LEN_TROM)//发送数据
+			{
+
+				for (m_2 = 0; m_2 < SEND_SIZE; m_2++)//64个数据一发
+				{
+					if ((cMyDlg->m_ctrl_check_RamEncEn.GetCheck()) && (cMyDlg->m_combox_form.GetCurSel() != FILE_RCF_ENC)) send_buffer[m_2] = TROM_Enc[m_all];
+					else send_buffer[m_2] = buffer_TROM[m_all + 0x40000];
+					m_all++;
+				}
+
+				USBBulkWriteData(0, EP1_OUT, (char*)send_buffer, SEND_SIZE, 500);
+
+				for (int m = 0; m < 50; m++)
+				{
+					USBBulkReadData(0, EP1_IN, (char*)recv_buffer, EP1_IN_SIZE, 500);
+
+					if (recv_buffer[3] != 0x10)
+					{
+						::Sleep(1);
+						continue;
+					}
+					else break;
+				}
+
+				memset(send_buffer, 0, SEND_SIZE);
+
+				ram_strrun.Format("%d", m_all / 1024);
+				cMyDlg->m_ctrl_fpgalog.ReplaceSel("发送数据中...已发送" + ram_strrun + "K(共32K)");
+
+				m_persent++;
+				persent.Format("%.0f%%", 100.0*(float)(m_persent - 0) / (float)(32 - 0));//显示进度比
+				cMyDlg->GetDlgItem(IDC_Persent)->SetWindowText(persent);
+			}
+		}
+
+		cMyDlg->m_ctrl_fpgalog.ReplaceSel("校验已发送数据...");
+		long check_t = 0;
+
+		while (check_t < 1000)
+		{
+
+			USBBulkReadData(0, EP1_IN, (char*)recv_buffer, EP1_IN_SIZE, check_t);
+
+			if (recv_buffer[3] == 0x10)
+			{
+				cMyDlg->MessageBox("写RAM成功！", "RAM操作", MB_ICONINFORMATION);
+
+				cMyDlg->m_ctrl_fpgalog.ReplaceSel("写RAM完成...");
+				memset(recv_buffer, 0, 1024);
+				break;
+			}
+			else if (recv_buffer[3] == 0xFF)
+			{
+				cMyDlg->MessageBox("写RAM失败!请检查设备并对设备进行重新上电", "ERROR！", MB_ICONEXCLAMATION);
+				cMyDlg->m_ctrl_fpgalog.ReplaceSel("数据读取校验失败，请检查设备并对设备进行重新上电");
+				memset(recv_buffer, 0, 1024);
+
+				cMyDlg->Func_Enable(TRUE);
+				return false;
+			}
+			else continue;
+
+			check_t += 10;
+		}
+
+		//发送数据显示
+
+		cMyDlg->m_ctrl_fpgasend.SetWindowText(_T(""));//显示发送数据
+		cMyDlg->m_ctrl_fpgasend.ReplaceSel(STR2);
+
+		CString str_len_data;//监控发送数据长度
+		str_len_data.Format(_T("%1d"), cMyDlg->m_ctrl_fpgasend.GetTextLength() / 3);
+		cMyDlg->m_ctrl_static_fpga_send.SetWindowText("Send:" + str_len_data + "Byte");
+
+		memset(PROM_Enc, 0, ADD_LEN_PROM);
+		memset(ATMC_Enc, 0, ADD_LEN_ATMC);
+		memset(TROM_Enc, 0, ADD_LEN_TROM);
+
+		cMyDlg->Func_Enable(TRUE);
 	}
-
-	//发送数据显示
-
-	cMyDlg->m_ctrl_fpgasend.SetWindowText(_T(""));//显示发送数据
-	cMyDlg->m_ctrl_fpgasend.ReplaceSel(STR2);
-
-	CString str_len_data;//监控发送数据长度
-	str_len_data.Format(_T("%1d"),cMyDlg->m_ctrl_fpgasend.GetTextLength()/3);
-	cMyDlg->m_ctrl_static_fpga_send.SetWindowText("Send:"+str_len_data+"Byte");
-
-	memset(PROM_Enc,0, ADD_LEN_PROM);
-	memset(ATMC_Enc,0,ADD_LEN_ATMC);
-	memset(TROM_Enc,0,ADD_LEN_TROM);
-
-	cMyDlg->Func_Enable(TRUE);
 
 	return true;
 }
@@ -2047,6 +2077,18 @@ void CFPGA_Memory_SetDlg::OnCbnSelchangeComboForm()
 	{
 		m_ctrl_check_RamEncEn.SetCheck(false);
 		m_ctrl_check_RamEncEn.EnableWindow(false);
+
+		if (m_combox_ram_selenc.GetCurSel() == MODE_HY328A_SPW_201703)
+		{
+			if (m_ctrl_ram_check_prom.GetCheck())
+			{
+				m_ctrl_ram_check_alglib.SetCheck(true);
+			}
+			else
+			{
+				m_ctrl_ram_check_alglib.SetCheck(false);
+			}
+		}
 	}
 	else
 	{
